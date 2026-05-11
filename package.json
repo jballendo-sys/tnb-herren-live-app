@@ -1,6 +1,26 @@
 {
-  "name":"tnb-herren-live-app","version":"0.2.0","private":true,
-  "scripts":{"dev":"next dev","build":"next build","start":"next start","refresh":"tsx scripts/refresh.ts","refresh:quick":"tsx scripts/refresh.ts --limit=20"},
-  "dependencies":{"cheerio":"^1.0.0","next":"^14.2.5","react":"^18.3.1","react-dom":"^18.3.1","tsx":"^4.16.2"},
-  "devDependencies":{"@types/node":"^20.14.9","@types/react":"^18.3.3","@types/react-dom":"^18.3.0","typescript":"^5.5.3"}
+  "name": "tnb-herren-live-app",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "refresh": "npm run refresh:raw && tsx scripts/clean-data.ts && tsx scripts/validate-data.ts",
+    "refresh:quick": "tsx scripts/refresh.ts --limit=20",
+    "refresh:raw": "tsx scripts/refresh.ts"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "next": "^14.2.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tsx": "^4.16.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.5.3"
+  }
 }
