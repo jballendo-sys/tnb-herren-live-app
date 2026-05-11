@@ -519,11 +519,15 @@ export function TnbDashboard({ data }: { data: AppData }) {
           <footer style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid #e2e8f0", color: "#64748b", fontSize: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
           <span>MatchRadar TNB · Inoffizielle Auswertung öffentlicher nuLiga Daten</span>
-          <a href="/impressum" style={{ fontWeight: 800 }}>Impressum</a>
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+  <a href="/radar" style={{ fontWeight: 800 }}>Spieltagsradar</a>
+  <a href="/impressum" style={{ fontWeight: 800 }}>Impressum</a>
+</div>
         </div>
       </footer>
     </main>
   );
 }
+
 
 
