@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server";import { scrapeTnbMen } from "@/lib/scrape";import { saveData } from "@/lib/storage";
+export async function POST(request:Request){const secret=request.headers.get("x-refresh-secret");if(process.env.TNB_REFRESH_SECRET&&secret!==process.env.TNB_REFRESH_SECRET)return NextResponse.json({error:"Nicht autorisiert"},{status:401});const url=new URL(request.url);const n=Number(url.searchParams.get("limit"));const data=await scrapeTnbMen({limit:Number.isFinite(n)?n:undefined,concurrency:5});await saveData(data);return NextResponse.json(data)}
