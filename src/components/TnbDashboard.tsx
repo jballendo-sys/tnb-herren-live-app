@@ -268,7 +268,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
   const cities = new Set(filteredTeams.map((team) => team.cityGuess)).size;
   const allFixtures = filteredTeams.flatMap((team) => fixturesForTeam(team));
   const completed = allFixtures.filter((fixture) => fixture.status === "completed").length;
-  const live = allFixtures.filter((fixture) => fixture.status === "live").length;
+  const openFixtures = allFixtures.filter((fixture) => fixture.status === "open").length;
 
   return (
     <main className="container">
@@ -298,7 +298,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
         <div className="card"><div className="metricLabel">Vereine</div><div className="metricValue">{clubs}</div></div>
         <div className="card"><div className="metricLabel">Orte</div><div className="metricValue">{cities}</div></div>
         <div className="card"><div className="metricLabel">Gruppen</div><div className="metricValue">{data.groupCount}</div></div>
-        <div className="card"><div className="metricLabel">Live</div><div className="metricValue">{live}</div></div>
+        <div className="card"><div className="metricLabel">Offene Spiele</div><div className="metricValue">{openFixtures}</div></div>
         <div className="card"><div className="metricLabel">Beendet</div><div className="metricValue">{completed}</div></div>
       </section>
 
@@ -521,6 +521,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
           <span>MatchRadar TNB · Inoffizielle Auswertung öffentlicher nuLiga Daten</span>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
   <a href="/radar" style={{ fontWeight: 800 }}>Spieltagsradar</a>
+<a href="/duelle" style={{ fontWeight: 800 }}>Hameln Pyrmont Duelle</a>
   <a href="/impressum" style={{ fontWeight: 800 }}>Impressum</a>
 </div>
         </div>
@@ -528,6 +529,8 @@ export function TnbDashboard({ data }: { data: AppData }) {
     </main>
   );
 }
+
+
 
 
 
