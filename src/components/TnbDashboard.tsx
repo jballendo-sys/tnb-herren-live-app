@@ -3,6 +3,68 @@
 import { useMemo, useState } from "react";
 import type { AppData, Fixture, FixtureStatus, StandingRow, TeamEntry } from "@/types/tnb";
 
+function AppLogo() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <div
+        style={{
+          width: 54,
+          height: 54,
+          borderRadius: 18,
+          background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
+          display: "grid",
+          placeItems: "center",
+          boxShadow: "0 12px 28px rgba(15, 23, 42, 0.22)"
+        }}
+      >
+        <div
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: "50%",
+            background: "radial-gradient(circle at 35% 35%, #fef08a, #facc15)",
+            border: "2px solid rgba(255,255,255,0.75)",
+            position: "relative"
+          }}
+        >
+          <span
+            style={{
+              position: "absolute",
+              left: 7,
+              top: 2,
+              width: 2,
+              height: 24,
+              background: "rgba(15,23,42,0.35)",
+              transform: "rotate(25deg)",
+              borderRadius: 999
+            }}
+          />
+          <span
+            style={{
+              position: "absolute",
+              right: 7,
+              top: 2,
+              width: 2,
+              height: 24,
+              background: "rgba(15,23,42,0.35)",
+              transform: "rotate(25deg)",
+              borderRadius: 999
+            }}
+          />
+        </div>
+      </div>
+
+      <div>
+        <div style={{ fontSize: 24, fontWeight: 900, letterSpacing: "-0.03em" }}>
+          MatchRadar TNB
+        </div>
+        <div style={{ color: "#64748b", fontSize: 14, fontWeight: 600 }}>
+          Herren Ligen · Ergebnisse · Tabellen · Analyse
+        </div>
+      </div>
+    </div>
+  );
+}
 function splitRecord(value: string | null) {
   if (!value) return { a: 0, b: 0 };
   const [a, b] = value.split(":").map(Number);
@@ -212,12 +274,12 @@ export function TnbDashboard({ data }: { data: AppData }) {
     <main className="container">
       <section className="header">
         <div>
-          <div className="badge">TNB Sommer 2026 · echte nuLiga Daten</div>
-          <h1 className="title">TNB Herren Vereinsfinder</h1>
-          <p className="subtitle">
-            Alle aktiven Herren Gruppen und Herren Altersklassen aus dem TNB nuLiga System.
-            Suche nach Verein, Ort, Altersklasse, Liga oder Gruppe und öffne die Detailansicht pro Mannschaft.
-          </p>
+          <AppLogo />
+<div className="badge" style={{ marginTop: 18 }}>Inoffizielle Auswertung öffentlicher nuLiga Daten</div>
+<h1 className="title" style={{ marginTop: 18 }}>TNB Herren Vereinsfinder</h1>
+<p className="subtitle">
+  Suche nach Verein, Ort, Altersklasse, Liga oder Gruppe. Öffne jede Mannschaft und sieh Ergebnisse, Tabellen, Restprogramm und Analysen auf Basis öffentlicher nuLiga Daten.
+</p>
         </div>
 
         <div className="card">
@@ -454,6 +516,14 @@ export function TnbDashboard({ data }: { data: AppData }) {
           )}
         </section>
       </section>
+          <footer style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid #e2e8f0", color: "#64748b", fontSize: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+          <span>MatchRadar TNB · Inoffizielle Auswertung öffentlicher nuLiga Daten</span>
+          <a href="/impressum" style={{ fontWeight: 800 }}>Impressum</a>
+        </div>
+      </footer>
     </main>
   );
 }
+
+
