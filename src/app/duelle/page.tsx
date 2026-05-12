@@ -1,41 +1,5 @@
 ﻿import { loadData } from "@/lib/storage";
 
-const REGION_PLACES = [
-  "emmerthal",
-  "hameln",
-  "aerzen",
-  "bad pyrmont",
-  "hessisch oldendorf",
-  "fischbeck",
-  "fuhlen",
-  "grohnde",
-  "tündern",
-  "tuendern",
-  "klein berkel",
-  "afferede",
-  "afferde",
-  "halvestorf",
-  "hastenbeck",
-  "salzhemmendorf",
-  "coppenbrügge",
-  "coppenbruegge",
-  "bisperode",
-  "lauenstein",
-  "bodenwerder",
-  "hohenbostel"
-];
-
-const EMMERTHAL_AGE_CLASSES = ["herren 30", "herren 50"];
-
-function normalize(value: string | null | undefined) {
-  return String(value || "")
-    .toLowerCase()
-    .replace(/ä/g, "ae")
-    .replace(/ö/g, "oe")
-    .replace(/ü/g, "ue")
-    .replace(/ß/g, "ss");
-}
-
 function parseGermanDate(value: string | null | undefined) {
   if (!value) return null;
 
@@ -62,16 +26,22 @@ function formatDate(date: Date | null) {
   });
 }
 
-function daysUntil(date: Date | null) {
-  if (!date) return null;
+function monthLabel(date: Date) {
+  return date.toLocaleDateString("de-DE", {
+    month: "long",
+    year: "numeric"
+  });
+}
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const target = new Date(date);
-  target.setHours(0, 0, 0, 0);
-
-  return Math.round((target.getTime() - today.getTime()) / 86400000);
+function normalize(value: string | null | undefined) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/ä/g, "ae")
+    .replace(/ö/g, "oe")
+    .replace(/ü/g, "ue")
+    .replace(/ß/g, "ss")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }
 
 function safeScore(value: string | null | undefined) {
@@ -86,18 +56,6 @@ function safeScore(value: string | null | undefined) {
   return trimmed;
 }
 
-function regionHits(text: string) {
-  const normalizedText = normalize(text);
-
-  return REGION_PLACES.filter((place) => {
-    return normalizedText.includes(normalize(place));
-  });
-}
-
-function isHamelnPyrmontDuel(homeTeam: string, awayTeam: string) {
-  return regionHits(homeTeam).length > 0 && regionHits(awayTeam).length > 0;
-}
-
 function uniqueFixtureKey(item: any) {
   return [
     item.groupId,
@@ -108,53 +66,106 @@ function uniqueFixtureKey(item: any) {
   ].join("|");
 }
 
-function isEmmerthalTeam(team: any) {
-  return normalize(team.club).includes("emmerthal") && EMMERTHAL_AGE_CLASSES.includes(normalize(team.ageClass));
+function leagueWithGroup(league: string | null | undefined, group: string | null | undefined) {
+  const cleanLeague = String(league || "Liga unbekannt").trim();
+  const cleanGroup = String(group || "").trim();
+
+  if (!cleanGroup) return cleanLeague;
+
+  return `${cleanLeague} (${cleanGroup})`;
 }
 
-function isOwnEmmerthalFixture(fixture: any) {
-  const text = normalize(`${fixture.homeTeam} ${fixture.awayTeam}`);
-  return text.includes("emmerthal");
-}
-
-function standingOfTeam(standings: any[], teamName: string) {
-  const normalizedTeam = normalize(teamName);
+function findStanding(standings: any[], teamName: string) {
+  const team = normalize(teamName);
 
   return standings.find((row) => {
-    const normalizedStandingTeam = normalize(row.team);
-    return normalizedStandingTeam === normalizedTeam || normalizedStandingTeam.includes(normalizedTeam) || normalizedTeam.includes(normalizedStandingTeam);
+    const standingTeam = normalize(row.team);
+    return standingTeam === team || standingTeam.includes(team) || team.includes(standingTeam);
   });
 }
 
-function closestCompetitors(team: any) {
-  const ownStanding = standingOfTeam(team.standings || [], team.club);
-  if (!ownStanding || !ownStanding.rank) return [];
+function rankOf(standings: any[], teamName: string) {
+  const standing = findStanding(standings, teamName);
+  const rank = Number(standing?.rank);
 
-  return (team.standings || [])
-    .filter((row: any) => normalize(row.team) !== normalize(team.club))
-    .map((row: any) => ({
-      ...row,
-      rankDistance: Math.abs(Number(row.rank) - Number(ownStanding.rank))
-    }))
-    .filter((row: any) => Number.isFinite(row.rankDistance))
-    .sort((a: any, b: any) => a.rankDistance - b.rankDistance || Number(a.rank) - Number(b.rank))
-    .slice(0, 2);
+  return Number.isFinite(rank) ? rank : null;
 }
 
-function fixtureContainsTeam(fixture: any, teamName: string) {
-  const text = normalize(`${fixture.homeTeam} ${fixture.awayTeam}`);
-  return text.includes(normalize(teamName));
+function playedOf(standing: any) {
+  const played = Number(standing?.played);
+  return Number.isFinite(played) ? played : 0;
 }
 
-function relevanceText(item: any) {
-  if (item.kind === "own") {
-    return `Eigenes anstehendes Spiel der TSG Emmerthal ${item.emmerthalAgeClass}.`;
+function lossesOf(standing: any) {
+  const losses = Number(standing?.losses);
+  return Number.isFinite(losses) ? losses : 0;
+}
+
+function isUndefeated(standing: any) {
+  return standing && playedOf(standing) > 0 && lossesOf(standing) === 0;
+}
+
+function maxRank(standings: any[]) {
+  const ranks = standings
+    .map((row) => Number(row.rank))
+    .filter((rank) => Number.isFinite(rank));
+
+  return ranks.length ? Math.max(...ranks) : null;
+}
+
+function classifyTopMatch(item: any) {
+  const homeStanding = findStanding(item.standings || [], item.homeTeam);
+  const awayStanding = findStanding(item.standings || [], item.awayTeam);
+
+  const homeRank = rankOf(item.standings || [], item.homeTeam);
+  const awayRank = rankOf(item.standings || [], item.awayTeam);
+  const lastRank = maxRank(item.standings || []);
+
+  const bothUndefeated = isUndefeated(homeStanding) && isUndefeated(awayStanding);
+  const oneVsTwo =
+    homeRank !== null &&
+    awayRank !== null &&
+    ((homeRank === 1 && awayRank === 2) || (homeRank === 2 && awayRank === 1));
+
+  const lastVsPenultimate =
+    lastRank !== null &&
+    homeRank !== null &&
+    awayRank !== null &&
+    ((homeRank === lastRank && awayRank === lastRank - 1) ||
+      (awayRank === lastRank && homeRank === lastRank - 1));
+
+  if (bothUndefeated) {
+    return {
+      priority: 1,
+      label: "Ungeschlagen gegen ungeschlagen",
+      reason: "Beide Mannschaften sind in dieser Gruppe noch ungeschlagen."
+    };
   }
 
-  return `Beobachtungsspiel, weil ein direkter Tabellennachbar der TSG Emmerthal ${item.emmerthalAgeClass} beteiligt ist.`;
+  if (oneVsTwo) {
+    return {
+      priority: 2,
+      label: "Rang 1 gegen Rang 2",
+      reason: "Direktes Spitzenspiel zwischen den beiden bestplatzierten Mannschaften."
+    };
+  }
+
+  if (lastVsPenultimate) {
+    return {
+      priority: 3,
+      label: "Letzter gegen Vorletzter",
+      reason: "Direktes Duell im unteren Tabellenbereich."
+    };
+  }
+
+  return null;
 }
 
-function sortByDate(a: any, b: any) {
+function sortTopMatches(a: any, b: any) {
+  if (a.classification.priority !== b.classification.priority) {
+    return a.classification.priority - b.classification.priority;
+  }
+
   const left = a.dateObj ? a.dateObj.getTime() : Number.MAX_SAFE_INTEGER;
   const right = b.dateObj ? b.dateObj.getTime() : Number.MAX_SAFE_INTEGER;
 
@@ -163,13 +174,21 @@ function sortByDate(a: any, b: any) {
 
 export default async function DuellePage() {
   const data = await loadData();
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
 
   const seen = new Set<string>();
-  const duels: any[] = [];
+  const candidates: any[] = [];
 
   for (const team of data.teams || []) {
     for (const fixture of team.fixtures || []) {
-      if (!isHamelnPyrmontDuel(fixture.homeTeam, fixture.awayTeam)) continue;
+      if (fixture.status === "completed") continue;
+
+      const dateObj = parseGermanDate(fixture.date);
+      if (!dateObj) continue;
+
+      if (dateObj.getMonth() !== currentMonth || dateObj.getFullYear() !== currentYear) continue;
 
       const key = uniqueFixtureKey({
         groupId: team.groupId,
@@ -182,121 +201,44 @@ export default async function DuellePage() {
       if (seen.has(key)) continue;
       seen.add(key);
 
-      const dateObj = parseGermanDate(fixture.date);
-
-      duels.push({
+      const item = {
         ...fixture,
         dateObj,
-        daysUntil: daysUntil(dateObj),
         ageClass: team.ageClass,
         league: team.league,
         group: team.group,
         groupId: team.groupId,
         groupUrl: team.groupUrl,
         standings: team.standings || []
+      };
+
+      const classification = classifyTopMatch(item);
+
+      if (!classification) continue;
+
+      candidates.push({
+        ...item,
+        classification
       });
     }
   }
 
-  const upcoming = duels
-    .filter((item) => item.status !== "completed")
-    .filter((item) => item.daysUntil === null || item.daysUntil >= 0)
-    .sort(sortByDate);
+  const topMatches = candidates.sort(sortTopMatches).slice(0, 10);
 
-  const completed = duels
-    .filter((item) => item.status === "completed")
-    .sort((a, b) => {
-      const left = a.dateObj ? a.dateObj.getTime() : 0;
-      const right = b.dateObj ? b.dateObj.getTime() : 0;
-      return right - left;
-    });
-
-  const emmerthalTeams = (data.teams || []).filter(isEmmerthalTeam);
-  const importantForEmmerthal: any[] = [];
-  const importantSeen = new Set<string>();
-
-  for (const team of emmerthalTeams) {
-    const ownUpcoming = (team.fixtures || [])
-      .filter((fixture: any) => fixture.status !== "completed")
-      .filter((fixture: any) => isOwnEmmerthalFixture(fixture))
-      .map((fixture: any) => {
-        const dateObj = parseGermanDate(fixture.date);
-
-        return {
-          ...fixture,
-          dateObj,
-          daysUntil: daysUntil(dateObj),
-          emmerthalAgeClass: team.ageClass,
-          emmerthalLeague: team.league,
-          emmerthalGroup: team.group,
-          groupId: team.groupId,
-          groupUrl: team.groupUrl,
-          kind: "own"
-        };
-      })
-      .filter((fixture: any) => fixture.daysUntil === null || fixture.daysUntil >= 0)
-      .sort(sortByDate);
-
-    for (const fixture of ownUpcoming) {
-      const key = `own-${team.id}-${uniqueFixtureKey(fixture)}`;
-      if (importantSeen.has(key)) continue;
-      importantSeen.add(key);
-      importantForEmmerthal.push(fixture);
-    }
-
-    const competitors = closestCompetitors(team);
-    const competitorFixtures: any[] = [];
-
-    for (const competitor of competitors) {
-      const nextFixture = (team.fixtures || [])
-        .filter((fixture: any) => fixture.status !== "completed")
-        .filter((fixture: any) => !isOwnEmmerthalFixture(fixture))
-        .filter((fixture: any) => fixtureContainsTeam(fixture, competitor.team))
-        .map((fixture: any) => {
-          const dateObj = parseGermanDate(fixture.date);
-
-          return {
-            ...fixture,
-            dateObj,
-            daysUntil: daysUntil(dateObj),
-            emmerthalAgeClass: team.ageClass,
-            emmerthalLeague: team.league,
-            emmerthalGroup: team.group,
-            groupId: team.groupId,
-            groupUrl: team.groupUrl,
-            kind: "competitor",
-            competitor: competitor.team
-          };
-        })
-        .filter((fixture: any) => fixture.daysUntil === null || fixture.daysUntil >= 0)
-        .sort(sortByDate)[0];
-
-      if (nextFixture) competitorFixtures.push(nextFixture);
-    }
-
-    for (const fixture of competitorFixtures.slice(0, 2)) {
-      const key = `competitor-${team.id}-${uniqueFixtureKey(fixture)}`;
-      if (importantSeen.has(key)) continue;
-      importantSeen.add(key);
-      importantForEmmerthal.push(fixture);
-    }
-  }
-
-  importantForEmmerthal.sort((a, b) => {
-    if (a.kind !== b.kind) return a.kind === "own" ? -1 : 1;
-    return sortByDate(a, b);
-  });
+  const undefeatedCount = candidates.filter((item) => item.classification.priority === 1).length;
+  const topTableCount = candidates.filter((item) => item.classification.priority === 2).length;
+  const bottomTableCount = candidates.filter((item) => item.classification.priority === 3).length;
 
   return (
     <main className="container">
       <section className="header">
         <div>
-          <div className="badge">Hameln Pyrmont Duelle</div>
-          <h1 className="title">Lokale Tennisduelle im TNB Herrenbereich</h1>
+          <div className="badge">TNB Top 10 Begegnungen</div>
+          <h1 className="title">Die wichtigsten Begegnungen im {monthLabel(today)}</h1>
           <p className="subtitle">
-            Fokus auf Begegnungen, bei denen beide Mannschaften einen klaren Bezug zur Region Hameln Pyrmont haben.
-            Dazu zählen unter anderem Hameln, Emmerthal, Aerzen, Bad Pyrmont, Hessisch Oldendorf, Fischbeck,
-            Fuhlen, Grohnde, Tündern, Klein Berkel, Salzhemmendorf und Coppenbrügge.
+            Diese Seite zeigt maximal zehn anstehende Begegnungen im TNB Herrenbereich für den aktuellen Monat.
+            Priorisiert werden zuerst Spiele zwischen zwei ungeschlagenen Mannschaften, danach Rang 1 gegen Rang 2,
+            danach Letzter gegen Vorletzter.
           </p>
         </div>
 
@@ -314,52 +256,64 @@ export default async function DuellePage() {
 
       <section className="metrics">
         <div className="card">
-          <div className="metricLabel">Hameln Pyrmont Duelle</div>
-          <div className="metricValue">{duels.length}</div>
+          <div className="metricLabel">Top Begegnungen</div>
+          <div className="metricValue">{topMatches.length}</div>
         </div>
         <div className="card">
-          <div className="metricLabel">Anstehende</div>
-          <div className="metricValue">{upcoming.length}</div>
+          <div className="metricLabel">Ungeschlagen Duelle</div>
+          <div className="metricValue">{undefeatedCount}</div>
         </div>
         <div className="card">
-          <div className="metricLabel">Beendet</div>
-          <div className="metricValue">{completed.length}</div>
+          <div className="metricLabel">Rang 1 gegen 2</div>
+          <div className="metricValue">{topTableCount}</div>
         </div>
         <div className="card">
-          <div className="metricLabel">Wichtig für Emmerthal</div>
-          <div className="metricValue">{importantForEmmerthal.length}</div>
+          <div className="metricLabel">Kellerduelle</div>
+          <div className="metricValue">{bottomTableCount}</div>
         </div>
       </section>
 
       <section className="card" style={{ padding: 28, marginTop: 24 }}>
-        <h2 style={{ marginTop: 0 }}>Wichtige Spiele für TSG Emmerthal</h2>
+        <h2 style={{ marginTop: 0 }}>Was zählt als Top Begegnung?</h2>
         <p className="subtitle" style={{ marginTop: 0 }}>
-          Zuerst werden alle anstehenden eigenen Spiele der Herren 30 und Herren 50 angezeigt.
-          Danach folgen wenige Beobachtungsspiele direkter Tabellennachbarn.
+          Die Bewertung ist bewusst einfach gehalten. Priorität 1 sind Spiele zwischen zwei ungeschlagenen Teams.
+          Priorität 2 sind direkte Spitzenspiele Rang 1 gegen Rang 2. Priorität 3 sind direkte Kellerduelle zwischen
+          dem letzten und vorletzten Team einer Gruppe. Betrachtet wird immer nur der aktuelle Monat.
         </p>
+      </section>
 
-        {importantForEmmerthal.length === 0 ? (
-          <p className="subtitle">Aktuell wurden keine relevanten Spiele gefunden.</p>
+      <section className="card" style={{ padding: 28, marginTop: 24 }}>
+        <h2 style={{ marginTop: 0 }}>Top 10 im {monthLabel(today)}</h2>
+
+        {topMatches.length === 0 ? (
+          <p className="subtitle">
+            Für den aktuellen Monat wurden aktuell keine Begegnungen gefunden, die den Top Kriterien entsprechen.
+          </p>
         ) : (
           <div style={{ display: "grid", gap: 14 }}>
-            {importantForEmmerthal.slice(0, 10).map((item) => (
-              <article className="fixture" key={`emmerthal-${item.kind}-${uniqueFixtureKey(item)}`}>
+            {topMatches.map((item, index) => (
+              <article className="fixture" key={`top-${uniqueFixtureKey(item)}`}>
                 <div>
-                  <strong>{formatDate(item.dateObj)}</strong>
-                  <br />
-                  <span style={{ color: "#66746c" }}>{item.time || "Zeit offen"}</span>
+                  <div style={{ fontWeight: 900, fontSize: 22 }}>#{index + 1}</div>
+                  <div style={{ marginTop: 8 }}>
+                    <strong>{formatDate(item.dateObj)}</strong>
+                    <br />
+                    <span style={{ color: "#66746c" }}>{item.time || "Zeit offen"}</span>
+                  </div>
                 </div>
 
                 <div>
                   <div style={{ fontWeight: 900 }}>{item.homeTeam}</div>
                   <div style={{ color: "#66746c" }}>gegen {item.awayTeam}</div>
-                  <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <span className="badge">{item.kind === "own" ? "Eigenes Emmerthal Spiel" : "Beobachtungsspiel"}</span>
-                    <span className="badge">{item.emmerthalAgeClass}</span>
-                    <span className="badge">{item.emmerthalGroup}</span>
+                  <div style={{ marginTop: 8, color: "#66746c", fontSize: 14 }}>
+                    {item.ageClass} · {leagueWithGroup(item.league, item.group)}
+                  </div>
+                  <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <span className="badge">Priorität {item.classification.priority}</span>
+                    <span className="badge">{item.classification.label}</span>
                   </div>
                   <div style={{ marginTop: 8, color: "#66746c", fontSize: 14 }}>
-                    {relevanceText(item)}
+                    {item.classification.reason}
                   </div>
                 </div>
 
@@ -370,79 +324,6 @@ export default async function DuellePage() {
                       nuLiga öffnen
                     </a>
                   )}
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="card" style={{ padding: 28, marginTop: 24 }}>
-        <h2 style={{ marginTop: 0 }}>Anstehende Hameln Pyrmont Duelle</h2>
-
-        {upcoming.length === 0 ? (
-          <p className="subtitle">Aktuell wurden keine anstehenden Hameln Pyrmont Duelle gefunden.</p>
-        ) : (
-          <div style={{ display: "grid", gap: 14 }}>
-            {upcoming.slice(0, 40).map((item) => (
-              <article className="fixture" key={`upcoming-${uniqueFixtureKey(item)}`}>
-                <div>
-                  <strong>{formatDate(item.dateObj)}</strong>
-                  <br />
-                  <span style={{ color: "#66746c" }}>{item.time || "Zeit offen"}</span>
-                </div>
-
-                <div>
-                  <div style={{ fontWeight: 900 }}>{item.homeTeam}</div>
-                  <div style={{ color: "#66746c" }}>gegen {item.awayTeam}</div>
-                  <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <span className="badge">Hameln Pyrmont Duell</span>
-                    <span className="badge">{item.ageClass}</span>
-                    <span className="badge">{item.group}</span>
-                  </div>
-                </div>
-
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontWeight: 900 }}>{safeScore(item.matchPoints)}</div>
-                  {item.groupUrl && (
-                    <a href={item.groupUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, fontWeight: 800 }}>
-                      nuLiga öffnen
-                    </a>
-                  )}
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="card" style={{ padding: 28, marginTop: 24 }}>
-        <h2 style={{ marginTop: 0 }}>Beendete Hameln Pyrmont Duelle</h2>
-
-        {completed.length === 0 ? (
-          <p className="subtitle">Noch keine beendeten Hameln Pyrmont Duelle gefunden.</p>
-        ) : (
-          <div style={{ display: "grid", gap: 14 }}>
-            {completed.slice(0, 30).map((item) => (
-              <article className="fixture" key={`completed-${uniqueFixtureKey(item)}`}>
-                <div>
-                  <strong>{formatDate(item.dateObj)}</strong>
-                  <br />
-                  <span style={{ color: "#66746c" }}>{item.time || "Zeit offen"}</span>
-                </div>
-
-                <div>
-                  <div style={{ fontWeight: 900 }}>{item.homeTeam}</div>
-                  <div style={{ color: "#66746c" }}>gegen {item.awayTeam}</div>
-                  <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <span className="badge">Hameln Pyrmont Duell</span>
-                    <span className="badge">{item.ageClass}</span>
-                    <span className="badge">{item.group}</span>
-                  </div>
-                </div>
-
-                <div style={{ textAlign: "right", fontWeight: 900 }}>
-                  {safeScore(item.matchPoints)}
                 </div>
               </article>
             ))}
@@ -452,4 +333,3 @@ export default async function DuellePage() {
     </main>
   );
 }
-

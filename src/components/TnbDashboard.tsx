@@ -520,7 +520,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
           <span>MatchRadar TNB · Inoffizielle Auswertung öffentlicher nuLiga Daten</span>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
   <a href="/radar" style={{ fontWeight: 800 }}>Spieltagsradar</a>
-<a href="/duelle" style={{ fontWeight: 800 }}>Hameln Pyrmont Duelle</a>
+<a href="/duelle" style={{ fontWeight: 800 }}>TNB Top 10</a>
   <a href="/impressum" style={{ fontWeight: 800 }}>Impressum</a>
 </div>
         </div>
@@ -528,6 +528,10 @@ export function TnbDashboard({ data }: { data: AppData }) {
     </main>
   );
 }
+
+
+
+
 
 
 
