@@ -521,6 +521,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
   <a href="/radar" style={{ fontWeight: 800 }}>Spieltagsradar</a>
 <a href="/duelle" style={{ fontWeight: 800 }}>TNB Top 10</a>
+<a href="/analysen" style={{ fontWeight: 800 }}>Analysen</a>
   <a href="/impressum" style={{ fontWeight: 800 }}>Impressum</a>
 </div>
         </div>
@@ -528,6 +529,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
     </main>
   );
 }
+
 
 
 
