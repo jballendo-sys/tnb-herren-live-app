@@ -30,10 +30,10 @@ const EMMERTHAL_AGE_CLASSES = ["herren 30", "herren 50"];
 function normalize(value: string | null | undefined) {
   return String(value || "")
     .toLowerCase()
-    .replaceAll("ä", "ae")
-    .replaceAll("ö", "oe")
-    .replaceAll("ü", "ue")
-    .replaceAll("ß", "ss");
+    .replace(/ä/g, "ae")
+    .replace(/ö/g, "oe")
+    .replace(/ü/g, "ue")
+    .replace(/ß/g, "ss");
 }
 
 function parseGermanDate(value: string | null | undefined) {
@@ -452,3 +452,4 @@ export default async function DuellePage() {
     </main>
   );
 }
+
