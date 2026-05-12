@@ -267,8 +267,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
   const clubs = new Set(filteredTeams.map((team) => team.club)).size;
   const cities = new Set(filteredTeams.map((team) => team.cityGuess)).size;
   const allFixtures = filteredTeams.flatMap((team) => fixturesForTeam(team));
-  const completed = allFixtures.filter((fixture) => fixture.status === "completed").length; const fixtureBase = openFixtures + completed; const seasonProgress = fixtureBase ? Math.round((completed / fixtureBase) * 100) : 0;
-  const openFixtures = allFixtures.filter((fixture) => fixture.status === "open").length;
+  const completed = allFixtures.filter((fixture) => fixture.status === "completed").length; const openFixtures = allFixtures.filter((fixture) => fixture.status === "open").length; const fixtureBase = openFixtures + completed; const seasonProgress = fixtureBase ? Math.round((completed / fixtureBase) * 100) : 0;
 
   return (
     <main className="container">
@@ -529,6 +528,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
     </main>
   );
 }
+
 
 
 
