@@ -510,6 +510,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
   
 <a href="/duelle" style={{ fontWeight: 800 }}>TNB Top 10 Begegnungen</a>
 <a href="/analysen" style={{ fontWeight: 800 }}>Analyse Center</a>
+<a href="/turniere" style={{ fontWeight: 800 }}>Turnierfinder</a>
   <a href="/impressum" style={{ fontWeight: 800 }}>Impressum</a>
 </div>
         </div>
@@ -517,6 +518,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
     </main>
   );
 }
+
 
 
 
