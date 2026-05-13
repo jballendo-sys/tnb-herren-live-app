@@ -194,6 +194,9 @@ export default async function DuellePage() {
       dateObj.setHours(0, 0, 0, 0);
 
       if (dateObj < today) continue;
+      dateObj.setHours(0, 0, 0, 0);
+
+      if (dateObj < today) continue;
       if (dateObj.getMonth() !== currentMonth || dateObj.getFullYear() !== currentYear) continue;
 
       const key = uniqueFixtureKey({
@@ -339,6 +342,7 @@ export default async function DuellePage() {
     </main>
   );
 }
+
 
 
 
