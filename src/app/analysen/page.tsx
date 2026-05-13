@@ -71,11 +71,13 @@ function makeRows(data: any) {
       const matchPoints = splitRecord(standing.matchPoints);
       const sets = splitRecord(standing.sets);
       const games = splitRecord(standing.games);
+      const played = Number(standing.played ?? 0);
+      const setLossesPerPointspiel = played > 0 ? Number((sets.lost / played).toFixed(2)) : 0;
 
       rows.push({
         team: standing.team,
         rank: standing.rank,
-        played: standing.played ?? 0,
+        played,
         wins: standing.wins ?? 0,
         draws: standing.draws ?? 0,
         losses: standing.losses ?? 0,
@@ -87,6 +89,7 @@ function makeRows(data: any) {
         matchPoints,
         sets,
         games,
+        setLossesPerPointspiel,
         ageClass: team.ageClass,
         league: team.league,
         group: team.group,
@@ -116,6 +119,11 @@ function DataBar({ value, max }: { value: number; max: number }) {
   );
 }
 
+
+function formatNumber(value: number) {
+  return String(value).replace(".", ",");
+}
+
 function RankingTable({
   title,
   subtitle,
@@ -131,13 +139,15 @@ function RankingTable({
   value: (row: any) => number;
   maxValue: number;
 }) {
+  const isAverageMetric = valueLabel.includes("Ø");
+
   return (
     <section className="card" style={{ padding: 28, marginTop: 24 }}>
       <h2 style={{ marginTop: 0 }}>{title}</h2>
       <p className="subtitle" style={{ marginTop: 0 }}>{subtitle}</p>
 
       {rows.length === 0 ? (
-        <p className="subtitle">Für diese Auswahl wurden keine passenden Teams gefunden.</p>
+        <p className="subtitle">Für diese Auswahl wurden keine passenden Mannschaften gefunden.</p>
       ) : (
         <div className="tableWrap">
           <table>
@@ -147,9 +157,9 @@ function RankingTable({
                 <th>Mannschaft</th>
                 <th>Altersklasse</th>
                 <th>Liga</th>
-                <th>Bilanz</th>
+                <th>Mannschaftspunkte</th>
+                <th>Matchpunkte</th>
                 <th>{valueLabel}</th>
-                <th>Visual</th>
               </tr>
             </thead>
             <tbody>
@@ -166,13 +176,16 @@ function RankingTable({
                   </td>
                   <td>{row.ageClass}</td>
                   <td>{leagueWithGroup(row.league, row.group)}</td>
+                  <td><strong>{row.tablePointsRaw || "0:0"}</strong></td>
+                  <td><strong>{row.matchPointsRaw || "0:0"}</strong></td>
                   <td>
-                    {row.tablePointsRaw || "0:0"} Punkte
-                    <br />
-                    <span style={{ color: "#66746c" }}>{row.matchPointsRaw || "0:0"} Matches</span>
+                    <strong>{formatNumber(value(row))}</strong>
+                    {isAverageMetric ? (
+                      <div style={{ color: "#66746c", fontSize: 13 }}>
+                        {row.sets.lost} Satzverluste gesamt · {row.played} Punktspiel{Number(row.played) === 1 ? "" : "e"}
+                      </div>
+                    ) : null}
                   </td>
-                  <td><strong>{value(row)}</strong></td>
-                  <td><DataBar value={value(row)} max={maxValue} /></td>
                 </tr>
               ))}
             </tbody>
@@ -223,15 +236,15 @@ export default async function AnalysenPage({
   const mostSetLosses = [...filteredRows]
     .filter((row) => Number(row.played) > 0)
     .sort((a, b) => {
+      if (b.setLossesPerPointspiel !== a.setLossesPerPointspiel) return b.setLossesPerPointspiel - a.setLossesPerPointspiel;
       if (b.sets.lost !== a.sets.lost) return b.sets.lost - a.sets.lost;
-      if (b.matchPoints.lost !== a.matchPoints.lost) return b.matchPoints.lost - a.matchPoints.lost;
       return Number(b.played || 0) - Number(a.played || 0);
     })
     .slice(0, 10);
 
   const maxUndefeated = Math.max(1, ...undefeatedNoMatchLoss.map((row) => row.matchPoints.won));
   const maxMatchPoints = Math.max(1, ...topMatchPoints.map((row) => row.matchPoints.won));
-  const maxSetLosses = Math.max(1, ...mostSetLosses.map((row) => row.sets.lost));
+  const maxSetLosses = Math.max(1, ...mostSetLosses.map((row) => row.setLossesPerPointspiel));
 
   return (
     <main className="container">
@@ -307,29 +320,32 @@ export default async function AnalysenPage({
         title="Dominante Teams"
         subtitle="Teams, die bislang keine Begegnung verloren und keinen einzelnen Matchpunkt abgegeben haben. Das ist der strengste Dominanzindikator."
         rows={undefeatedNoMatchLoss}
-        valueLabel="Gewonnene Matches"
+        valueLabel="Gewonnene Matchpunkte"
         value={(row) => row.matchPoints.won}
         maxValue={maxUndefeated}
       />
 
       <RankingTable
-        title="Offensivstärkste Teams"
-        subtitle="Teams mit den meisten gewonnenen Matchpunkten insgesamt. Diese Liste zeigt, welche Mannschaften über ihre bisherigen Begegnungen hinweg besonders viele Matches gewonnen haben."
+        title="Meiste gewonnene Matchpunkte"
+        subtitle="Teams mit den meisten gewonnenen Matchpunkten insgesamt. Diese Liste misst Gesamtleistung, nicht Effizienz. Mannschaften mit mehr gespielten Begegnungen können dadurch weiter oben stehen."
         rows={topMatchPoints}
-        valueLabel="Gewonnene Matches"
+        valueLabel="Gewonnene Matchpunkte"
         value={(row) => row.matchPoints.won}
         maxValue={maxMatchPoints}
       />
 
       <RankingTable
-        title="Teams unter Druck"
-        subtitle="Teams mit den meisten verlorenen Sätzen laut offizieller Gruppentabelle. Das kann auf viele gespielte Begegnungen, enge Spielverläufe oder sportlichen Druck hindeuten."
+        title="Ø Satzverluste je Punktspiel"
+        subtitle="Diese Analyse zeigt, wie viele Sätze eine Mannschaft durchschnittlich pro gespieltem Punktspiel verliert. Zusätzlich wird der absolute Satzverlust angezeigt."
         rows={mostSetLosses}
-        valueLabel="Verlorene Sätze"
-        value={(row) => row.sets.lost}
+        valueLabel="Ø Satzverluste je Punktspiel"
+        value={(row) => row.setLossesPerPointspiel}
         maxValue={maxSetLosses}
       />
     </main>
   );
 }
+
+
+
 
