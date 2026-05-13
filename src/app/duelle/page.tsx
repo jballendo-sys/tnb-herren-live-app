@@ -278,7 +278,7 @@ export default async function DuellePage() {
         <p className="subtitle" style={{ marginTop: 0 }}>
           Die Bewertung ist bewusst einfach gehalten. Priorität 1 sind Spiele zwischen zwei ungeschlagenen Teams.
           Priorität 2 sind direkte Spitzenspiele Rang 1 gegen Rang 2. Priorität 3 sind direkte Kellerduelle zwischen
-          dem letzten und vorletzten Team einer Gruppe. Betrachtet wird immer nur der aktuelle Monat.
+          dem letzten und vorletzten Team einer Gruppe. Priorität 4 ergänzt Spiele zwischen Rang 1 und Rang 3. Betrachtet wird immer nur der aktuelle Monat.
         </p>
       </section>
 
@@ -333,3 +333,4 @@ export default async function DuellePage() {
     </main>
   );
 }
+
