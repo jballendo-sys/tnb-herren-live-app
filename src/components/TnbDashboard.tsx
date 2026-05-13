@@ -266,8 +266,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
 
   const clubs = new Set(filteredTeams.map((team) => team.club)).size;
   const cities = new Set(filteredTeams.map((team) => team.cityGuess)).size;
-  const allFixtures = filteredTeams.flatMap((team) => fixturesForTeam(team));
-  const completed = allFixtures.filter((fixture) => fixture.status === "completed").length; const openFixtures = allFixtures.filter((fixture) => fixture.status === "open").length; const fixtureBase = openFixtures + completed; const seasonProgress = fixtureBase ? Math.round((completed / fixtureBase) * 100) : 0;
+  const allFixtures = filteredTeams.flatMap((team) => fixturesForTeam(team)); const uniqueFixtureMap = new Map<string, (typeof allFixtures)[number]>(); allFixtures.forEach((fixture) => { const key = `${(fixture as any).groupId || ""}|${fixture.date || ""}|${fixture.time || ""}|${fixture.homeTeam || ""}|${fixture.awayTeam || ""}`; uniqueFixtureMap.set(key, fixture); }); const uniqueFixtures = Array.from(uniqueFixtureMap.values()); const completed = uniqueFixtures.filter((fixture) => fixture.status === "completed").length; const openFixtures = uniqueFixtures.filter((fixture) => fixture.status === "open").length; const fixtureBase = openFixtures + completed; const seasonProgress = fixtureBase ? Math.round((completed / fixtureBase) * 100) : 0;
 
   return (
     <main className="container">
@@ -297,7 +296,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
         <div className="card"><div className="metricLabel">Vereine</div><div className="metricValue">{clubs}</div></div>
         <div className="card"><div className="metricLabel">Orte</div><div className="metricValue">{cities}</div></div>
         <div className="card"><div className="metricLabel">Gruppen</div><div className="metricValue">{data.groupCount}</div></div>
-        <div className="card"><div className="metricLabel">Saisonfortschritt</div><div className="metricValue">{seasonProgress}%</div><div style={{ marginTop: 8, color: "#66746c", fontSize: 14, fontWeight: 700 }}>{openFixtures} offene Spiele</div></div>
+        <div className="card"><div className="metricLabel">Saisonfortschritt</div><div className="metricValue">{seasonProgress}%</div><div style={{ marginTop: 8, color: "#66746c", fontSize: 14, fontWeight: 700 }}>{openFixtures} offene Begegnungen</div></div>
         <div className="card"><div className="metricLabel">Beendet</div><div className="metricValue">{completed}</div></div>
       </section>
 
@@ -489,7 +488,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
                     <p className="subtitle">
                       {selectedTeam.club} steht aktuell auf Rang {selectedAnalytics.rank ?? "?"} mit {selectedAnalytics.points} Tabellenpunkten.
                       Die Match Quote liegt bei {selectedAnalytics.matchRate} Prozent, die Satz Quote bei {selectedAnalytics.setRate} Prozent.
-                      Bisher wurden {selectedAnalytics.completedFixtures} Mannschaftsspiele abgeschlossen, {selectedAnalytics.openFixtures} sind offen.
+                      Bisher wurden {selectedAnalytics.completedFixtures} Begegnungen abgeschlossen, {selectedAnalytics.openFixtures} sind offen.
                     </p>
                     {selectedAnalytics.nextFixture && (
                       <p className="subtitle">
@@ -504,10 +503,6 @@ export function TnbDashboard({ data }: { data: AppData }) {
 
                   <DataCheck team={selectedTeam} />
                 </div>
-              )}
-
-              {selectedTeam.warnings.length > 0 && (
-                <div className="warning">{selectedTeam.warnings.join(" · ")}</div>
               )}
             </div>
           ) : (
@@ -529,6 +524,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
     </main>
   );
 }
+
 
 
 
