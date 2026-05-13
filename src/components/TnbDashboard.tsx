@@ -56,7 +56,7 @@ function AppLogo() {
 
       <div>
         <div style={{ fontSize: 24, fontWeight: 900, letterSpacing: "-0.03em" }}>
-          MatchRadar TNB
+          TNB Herren Kompass
         </div>
         <div style={{ color: "#64748b", fontSize: 14, fontWeight: 600 }}>
           Herren Ligen · Ergebnisse · Tabellen · Analyse
@@ -275,7 +275,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
         <div>
           <AppLogo />
 <div className="badge" style={{ marginTop: 18 }}>Inoffizielle Auswertung öffentlicher nuLiga Daten</div>
-<h1 className="title" style={{ marginTop: 18 }}>TNB Herren Vereinsfinder</h1>
+<h1 className="title" style={{ marginTop: 18 }}>TNB Herren Kompass</h1>
 <p className="subtitle">
   Suche nach Verein, Ort, Altersklasse, Liga oder Gruppe. Öffne jede Mannschaft und sieh Ergebnisse, Tabellen, Restprogramm und Analysen auf Basis öffentlicher nuLiga Daten.
 </p>
@@ -517,11 +517,11 @@ export function TnbDashboard({ data }: { data: AppData }) {
       </section>
           <footer style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid #e2e8f0", color: "#64748b", fontSize: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-          <span>MatchRadar TNB · Inoffizielle Auswertung öffentlicher nuLiga Daten</span>
+          <span>TNB Herren Kompass · Inoffizielle Auswertung öffentlicher nuLiga Daten</span>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-  <a href="/radar" style={{ fontWeight: 800 }}>Spieltagsradar</a>
-<a href="/duelle" style={{ fontWeight: 800 }}>TNB Top 10</a>
-<a href="/analysen" style={{ fontWeight: 800 }}>Analysen</a>
+  
+<a href="/duelle" style={{ fontWeight: 800 }}>TNB Top 10 Begegnungen</a>
+<a href="/analysen" style={{ fontWeight: 800 }}>Analyse Center</a>
   <a href="/impressum" style={{ fontWeight: 800 }}>Impressum</a>
 </div>
         </div>
@@ -529,6 +529,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
     </main>
   );
 }
+
 
 
 
