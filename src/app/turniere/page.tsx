@@ -26,30 +26,38 @@ const AGE_CLASSES = [
   "Herren 80"
 ];
 
+const MONTHS_2026 = [
+  ["all", "Alle Monate"],
+  ["01", "Januar 2026"],
+  ["02", "Februar 2026"],
+  ["03", "März 2026"],
+  ["04", "April 2026"],
+  ["05", "Mai 2026"],
+  ["06", "Juni 2026"],
+  ["07", "Juli 2026"],
+  ["08", "August 2026"],
+  ["09", "September 2026"],
+  ["10", "Oktober 2026"],
+  ["11", "November 2026"],
+  ["12", "Dezember 2026"]
+];
+
 type SearchParams = {
   verband?: string;
   altersklasse?: string;
+  monat?: string;
 };
-
-function normalize(value: string | null | undefined) {
-  return String(value || "")
-    .toLowerCase()
-    .replace(/ä/g, "ae")
-    .replace(/ö/g, "oe")
-    .replace(/ü/g, "ue")
-    .replace(/ß/g, "ss")
-    .trim();
-}
 
 function selected(value: string | undefined, fallback: string) {
   return value && value.length > 0 ? value : fallback;
 }
 
-function sourceHref(verband: string, altersklasse: string) {
+function sourceHref(verband: string, altersklasse: string, monat: string) {
   const params = new URLSearchParams();
 
   if (verband !== "all") params.set("verband", verband);
   if (altersklasse !== "all") params.set("altersklasse", altersklasse);
+  if (monat !== "all") params.set("monat", monat);
 
   const query = params.toString();
   return query ? `/turniere?${query}` : "/turniere";
@@ -80,7 +88,7 @@ function stripHtml(value: string) {
 }
 
 function splitTournamentBlocks(text: string) {
-  const datePattern = /(\d{2}\.\d{2}\.\s*bis\s*\d{2}\.\d{2}\.|\d{2}\.\d{2}\.\s*bis\s*\d{2}\.\d{2}\.\d{4}|\d{2}\.\d{2}\.\d{4}\s*bis\s*\d{2}\.\d{2}\.\d{4})/g;
+  const datePattern = /(\d{2}\.\d{2}\.\s*bis\s*\d{2}\.\d{2}\.|\d{2}\.\d{2}\.\s*bis\s*\d{2}\.\d{2}\.\d{4}|\d{2}\.\d{2}\.\d{4}\s*bis\s*\d{2}\.\d{2}\.\d{4}|\d{2}\.\d{2}\.\d{4})/g;
   const matches = Array.from(text.matchAll(datePattern));
 
   if (matches.length === 0) return [];
@@ -93,8 +101,18 @@ function splitTournamentBlocks(text: string) {
 }
 
 function extractDate(block: string) {
-  const match = block.match(/(\d{2}\.\d{2}\.(?:\d{4})?\s*bis\s*\d{2}\.\d{2}\.(?:\d{4})?)/);
+  const match = block.match(/(\d{2}\.\d{2}\.(?:\d{4})?\s*bis\s*\d{2}\.\d{2}\.(?:\d{4})?|\d{2}\.\d{2}\.\d{4})/);
   return match ? match[1].replace(/\s+/g, " ") : "Datum offen";
+}
+
+function extractMonth(dateText: string) {
+  const match = dateText.match(/\d{2}\.(\d{2})\./);
+  return match ? match[1] : "unknown";
+}
+
+function extractYear(dateText: string) {
+  const match = dateText.match(/(20\d{2})/);
+  return match ? match[1] : "2026";
 }
 
 function extractAgeClasses(block: string) {
@@ -119,6 +137,9 @@ function parseTournaments(source: Awaited<ReturnType<typeof fetchSource>>) {
 
   return blocks
     .map((block, index) => {
+      const date = extractDate(block);
+      const month = extractMonth(date);
+      const year = extractYear(date);
       const ageClasses = extractAgeClasses(block);
 
       return {
@@ -126,14 +147,17 @@ function parseTournaments(source: Awaited<ReturnType<typeof fetchSource>>) {
         association: source.association,
         sourceLabel: source.label,
         name: extractName(block),
-        date: extractDate(block),
+        date,
+        month,
+        year,
         ageClasses,
         text: block,
         url: source.url
       };
     })
     .filter((item) => item.ageClasses.length > 0)
-    .slice(0, 80);
+    .filter((item) => item.year === "2026")
+    .slice(0, 240);
 }
 
 export default async function TurnierePage({
@@ -143,13 +167,23 @@ export default async function TurnierePage({
 }) {
   const activeAssociation = selected(searchParams?.verband, "all");
   const activeAge = selected(searchParams?.altersklasse, "all");
+  const activeMonth = selected(searchParams?.monat, "all");
 
   const sourceResults = await Promise.all(SOURCES.map(fetchSource));
   const tournaments = sourceResults.flatMap(parseTournaments);
 
   const filtered = tournaments
     .filter((item) => activeAssociation === "all" || item.association === activeAssociation)
-    .filter((item) => activeAge === "all" || item.ageClasses.includes(activeAge));
+    .filter((item) => activeAge === "all" || item.ageClasses.includes(activeAge))
+    .filter((item) => activeMonth === "all" || item.month === activeMonth);
+
+  const monthlyCounts = MONTHS_2026
+    .filter(([value]) => value !== "all")
+    .map(([value, label]) => ({
+      value,
+      label,
+      count: tournaments.filter((item) => item.month === value).length
+    }));
 
   return (
     <main className="container">
@@ -158,8 +192,8 @@ export default async function TurnierePage({
           <div className="badge">Turnierfinder</div>
           <h1 className="title">TNB und Westfalen Turniersuche</h1>
           <p className="subtitle">
-            Diese Seite bündelt Turniere aus den öffentlichen nuLiga Turnierkalendern für TNB und Westfalen.
-            In dieser ersten Version kannst du nach Verband und Altersklasse filtern. Die Umkreissuche ergänzen wir als nächsten Schritt.
+            Diese Seite bündelt Turniere aus den öffentlichen nuLiga Turnierkalendern für das Jahr 2026.
+            Du kannst nach Verband, Altersklasse und Monat filtern. Die Umkreissuche ergänzen wir im nächsten Schritt.
           </p>
         </div>
 
@@ -185,11 +219,35 @@ export default async function TurnierePage({
           <div className="metricLabel">Westfalen</div>
           <div className="metricValue">{filtered.filter((item) => item.association === "WTV").length}</div>
         </div>
+        <div className="card">
+          <div className="metricLabel">Ausgewählter Monat</div>
+          <div className="metricValue" style={{ fontSize: 22 }}>
+            {MONTHS_2026.find(([value]) => value === activeMonth)?.[1] || "Alle Monate"}
+          </div>
+        </div>
       </section>
 
       <section className="card" style={{ padding: 22, marginTop: 24 }}>
+        <div className="metricLabel" style={{ marginBottom: 12 }}>Monat 2026</div>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 22 }}>
+          {MONTHS_2026.map(([value, label]) => (
+            <a
+              key={value}
+              className="badge"
+              href={sourceHref(activeAssociation, activeAge, value)}
+              style={{
+                textDecoration: "none",
+                background: activeMonth === value ? "#245638" : undefined,
+                color: activeMonth === value ? "#ffffff" : undefined
+              }}
+            >
+              {label}
+            </a>
+          ))}
+        </div>
+
         <div className="metricLabel" style={{ marginBottom: 12 }}>Verband filtern</div>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 20 }}>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 22 }}>
           {[
             ["all", "Alle"],
             ["TNB", "TNB"],
@@ -198,7 +256,7 @@ export default async function TurnierePage({
             <a
               key={value}
               className="badge"
-              href={sourceHref(value, activeAge)}
+              href={sourceHref(value, activeAge, activeMonth)}
               style={{
                 textDecoration: "none",
                 background: activeAssociation === value ? "#245638" : undefined,
@@ -214,7 +272,7 @@ export default async function TurnierePage({
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <a
             className="badge"
-            href={sourceHref(activeAssociation, "all")}
+            href={sourceHref(activeAssociation, "all", activeMonth)}
             style={{
               textDecoration: "none",
               background: activeAge === "all" ? "#245638" : undefined,
@@ -228,7 +286,7 @@ export default async function TurnierePage({
             <a
               key={age}
               className="badge"
-              href={sourceHref(activeAssociation, age)}
+              href={sourceHref(activeAssociation, age, activeMonth)}
               style={{
                 textDecoration: "none",
                 background: activeAge === age ? "#245638" : undefined,
@@ -242,13 +300,34 @@ export default async function TurnierePage({
       </section>
 
       <section className="card" style={{ padding: 28, marginTop: 24 }}>
+        <h2 style={{ marginTop: 0 }}>Monatsübersicht 2026</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
+          {monthlyCounts.map((item) => (
+            <a
+              key={item.value}
+              href={sourceHref(activeAssociation, activeAge, item.value)}
+              className="card"
+              style={{
+                padding: 16,
+                textDecoration: "none",
+                borderColor: activeMonth === item.value ? "#245638" : undefined
+              }}
+            >
+              <div className="metricLabel">{item.label}</div>
+              <div className="metricValue" style={{ fontSize: 24 }}>{item.count}</div>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <section className="card" style={{ padding: 28, marginTop: 24 }}>
         <h2 style={{ marginTop: 0 }}>Passende Turniere</h2>
 
         {filtered.length === 0 ? (
           <p className="subtitle">Für diese Auswahl wurden aktuell keine Turniere gefunden.</p>
         ) : (
           <div style={{ display: "grid", gap: 14 }}>
-            {filtered.slice(0, 40).map((item) => (
+            {filtered.slice(0, 80).map((item) => (
               <article
                 key={item.id}
                 style={{
