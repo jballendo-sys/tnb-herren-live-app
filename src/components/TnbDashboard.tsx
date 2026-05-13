@@ -257,11 +257,11 @@ export function TnbDashboard({ data }: { data: AppData }) {
     const map = new Map<string, TeamEntry[]>();
 
     for (const team of filteredTeams) {
-      const key = `${team.club} · ${team.cityGuess}`;
+      const key = team.club;
       map.set(key, [...(map.get(key) || []), team]);
     }
 
-    return Array.from(map.entries()).map(([clubCity, teams]) => ({ clubCity, teams }));
+    return Array.from(map.entries()).map(([clubName, teams]) => ({ clubName, teams }));
   }, [filteredTeams]);
 
   const clubs = new Set(filteredTeams.map((team) => team.club)).size;
@@ -334,8 +334,8 @@ export function TnbDashboard({ data }: { data: AppData }) {
 
           <div className="sidebarList">
             {grouped.map((group) => (
-              <div key={group.clubCity} style={{ marginTop: 18 }}>
-                <div style={{ fontWeight: 800, fontSize: 14 }}>{group.clubCity}</div>
+              <div key={group.clubName} style={{ marginTop: 18 }}>
+                <div style={{ fontWeight: 800, fontSize: 14 }}>{group.clubName}</div>
 
                 {group.teams.map((team) => {
                   const a = analyticsFor(team);
@@ -529,6 +529,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
     </main>
   );
 }
+
 
 
 
