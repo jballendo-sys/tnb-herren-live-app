@@ -276,7 +276,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
 <div className="badge" style={{ marginTop: 18 }}>Inoffizielle Auswertung öffentlicher nuLiga Daten</div>
 <h1 className="title" style={{ marginTop: 18 }}>TNB Herren Kompass</h1>
 <p className="subtitle">
-  Suche nach Verein, Ort, Altersklasse, Liga oder Gruppe. Öffne jede Mannschaft und sieh Ergebnisse, Tabellen, Restprogramm und Analysen auf Basis öffentlicher nuLiga Daten.
+  Der TNB Herren Kompass bündelt öffentliche nuLiga Daten und zeigt, welche Vereine, Mannschaften, Begegnungen und Entwicklungen im TNB Herrenbereich besonders relevant sind. Du findest deinen Verein schnell, siehst die wichtigsten Mannschaftsdaten und springst direkt zu Top Begegnungen und Analysen.
 </p>
         </div>
 
@@ -299,13 +299,6 @@ export function TnbDashboard({ data }: { data: AppData }) {
         <div className="card"><div className="metricLabel">Saisonfortschritt</div><div className="metricValue">{seasonProgress}%</div><div style={{ marginTop: 8, color: "#66746c", fontSize: 14, fontWeight: 700 }}>{openFixtures} offene Begegnungen</div></div>
         <div className="card"><div className="metricLabel">Beendet</div><div className="metricValue">{completed}</div></div>
       </section>
-
-      {data.warnings.length > 0 && (
-        <div className="warning">
-          {data.warnings.slice(0, 3).join(" · ")}
-          {data.warnings.length > 3 ? ` · plus ${data.warnings.length - 3} weitere Hinweise` : ""}
-        </div>
-      )}
 
       <section className="card controls">
         <input
@@ -524,6 +517,8 @@ export function TnbDashboard({ data }: { data: AppData }) {
     </main>
   );
 }
+
+
 
 
 
