@@ -224,15 +224,6 @@ export default async function AnalysenPage({
     })
     .slice(0, 10);
 
-  const topMatchPoints = [...filteredRows]
-    .filter((row) => Number(row.played) > 0)
-    .sort((a, b) => {
-      if (b.matchPoints.won !== a.matchPoints.won) return b.matchPoints.won - a.matchPoints.won;
-      if (a.matchPoints.lost !== b.matchPoints.lost) return a.matchPoints.lost - b.matchPoints.lost;
-      return Number(a.rank || 999) - Number(b.rank || 999);
-    })
-    .slice(0, 10);
-
   const mostSetLosses = [...filteredRows]
     .filter((row) => Number(row.played) > 0)
     .sort((a, b) => {
@@ -243,7 +234,6 @@ export default async function AnalysenPage({
     .slice(0, 10);
 
   const maxUndefeated = Math.max(1, ...undefeatedNoMatchLoss.map((row) => row.matchPoints.won));
-  const maxMatchPoints = Math.max(1, ...topMatchPoints.map((row) => row.matchPoints.won));
   const maxSetLosses = Math.max(1, ...mostSetLosses.map((row) => row.setLossesPerPointspiel));
 
   return (
@@ -277,10 +267,6 @@ export default async function AnalysenPage({
         <div className="card">
           <div className="metricLabel">Dominante Teams</div>
           <div className="metricValue">{undefeatedNoMatchLoss.length}</div>
-        </div>
-        <div className="card">
-          <div className="metricLabel">Top Matchpunkte</div>
-          <div className="metricValue">{topMatchPoints[0]?.matchPoints.won ?? 0}</div>
         </div>
         <div className="card">
           <div className="metricLabel">Satzverluste</div>
@@ -323,15 +309,6 @@ export default async function AnalysenPage({
         valueLabel="Gewonnene Matchpunkte"
         value={(row) => row.matchPoints.won}
         maxValue={maxUndefeated}
-      />
-
-      <RankingTable
-        title="Meiste gewonnene Matchpunkte"
-        subtitle="Teams mit den meisten gewonnenen Matchpunkten insgesamt. Diese Liste misst Gesamtleistung, nicht Effizienz. Mannschaften mit mehr gespielten Begegnungen können dadurch weiter oben stehen."
-        rows={topMatchPoints}
-        valueLabel="Gewonnene Matchpunkte"
-        value={(row) => row.matchPoints.won}
-        maxValue={maxMatchPoints}
       />
 
       <RankingTable
