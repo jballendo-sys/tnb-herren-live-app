@@ -238,11 +238,9 @@ export default async function AnalysenPage({
       <section className="header">
         <div>
           <div className="badge">TNB Analyse Center</div>
-          <h1 className="title">Übergreifende Team Analysen</h1>
+          <h1 className="title">TNB Analyse Center</h1>
           <p className="subtitle">
-            Diese Seite verdichtet die Tabellenstände über alle TNB Herren Ligen hinweg.
-            Du kannst nach Altersklasse filtern und siehst, welche Teams besonders dominant sind
-            oder auffällig viele Sätze abgeben.
+            Diese Seite zeigt auffällige Mannschaften über alle TNB Herren Ligen hinweg. Du kannst nach Altersklasse filtern und erkennst auf einen Blick dominante Teams, offensivstarke Mannschaften und Teams mit auffällig vielen Satzverlusten.
           </p>
         </div>
 
@@ -264,15 +262,15 @@ export default async function AnalysenPage({
           <div className="metricValue">{filteredRows.length}</div>
         </div>
         <div className="card">
-          <div className="metricLabel">Ohne Matchverlust</div>
+          <div className="metricLabel">Dominante Teams</div>
           <div className="metricValue">{undefeatedNoMatchLoss.length}</div>
         </div>
         <div className="card">
-          <div className="metricLabel">Beste Matchpunkte</div>
+          <div className="metricLabel">Top Matchpunkte</div>
           <div className="metricValue">{topMatchPoints[0]?.matchPoints.won ?? 0}</div>
         </div>
         <div className="card">
-          <div className="metricLabel">Höchste Satzverluste</div>
+          <div className="metricLabel">Satzverluste</div>
           <div className="metricValue">{mostSetLosses[0]?.sets.lost ?? 0}</div>
         </div>
       </section>
@@ -306,8 +304,8 @@ export default async function AnalysenPage({
       </section>
 
       <RankingTable
-        title="Top 10 ungeschlagen und ohne Matchverlust"
-        subtitle="Teams, die noch keine Begegnung verloren haben und laut Tabelle auch keinen einzelnen Matchpunkt abgegeben haben."
+        title="Dominante Teams"
+        subtitle="Teams, die bislang keine Begegnung verloren und keinen einzelnen Matchpunkt abgegeben haben. Das ist der strengste Dominanzindikator."
         rows={undefeatedNoMatchLoss}
         valueLabel="Gewonnene Matches"
         value={(row) => row.matchPoints.won}
@@ -315,8 +313,8 @@ export default async function AnalysenPage({
       />
 
       <RankingTable
-        title="Top 10 Team Matchpunkte"
-        subtitle="Teams mit den meisten gewonnenen Matchpunkten insgesamt. Beispiel: 6:0 plus 6:0 ergibt 12 gewonnene Matchpunkte."
+        title="Offensivstärkste Teams"
+        subtitle="Teams mit den meisten gewonnenen Matchpunkten insgesamt. Diese Liste zeigt, welche Mannschaften über ihre bisherigen Begegnungen hinweg besonders viele Matches gewonnen haben."
         rows={topMatchPoints}
         valueLabel="Gewonnene Matches"
         value={(row) => row.matchPoints.won}
@@ -324,8 +322,8 @@ export default async function AnalysenPage({
       />
 
       <RankingTable
-        title="Top 10 Teams mit den meisten Satzverlusten"
-        subtitle="Teams mit den meisten verlorenen Sätzen laut offizieller Gruppentabelle. Das kann auf viele gespielte Begegnungen oder enge Spielverläufe hindeuten."
+        title="Teams unter Druck"
+        subtitle="Teams mit den meisten verlorenen Sätzen laut offizieller Gruppentabelle. Das kann auf viele gespielte Begegnungen, enge Spielverläufe oder sportlichen Druck hindeuten."
         rows={mostSetLosses}
         valueLabel="Verlorene Sätze"
         value={(row) => row.sets.lost}
@@ -334,3 +332,4 @@ export default async function AnalysenPage({
     </main>
   );
 }
+
