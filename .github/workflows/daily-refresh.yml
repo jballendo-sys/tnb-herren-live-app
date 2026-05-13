@@ -18,6 +18,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Log scheduled start time
+        run: |
+          echo "Workflow gestartet"
+          echo "UTC Zeit: $(date -u)"
+          echo "Deutschland Zeit: $(TZ=Europe/Berlin date)"
+          echo "GitHub Event: ${{ github.event_name }}"
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -36,7 +43,20 @@ jobs:
         run: npm ci
 
       - name: Refresh TNB data
-        run: npm run refresh
+        run: |
+          echo "Datenabruf gestartet"
+          npm run refresh
+          echo "Datenabruf beendet"
+          echo "Deutschland Zeit nach Abruf: $(TZ=Europe/Berlin date)"
+
+      - name: Check data changes
+        run: |
+          git status --short
+          if git diff --quiet data/tnb-herren.json; then
+            echo "Daten geändert: nein"
+          else
+            echo "Daten geändert: ja"
+          fi
 
       - name: Commit updated data
         run: |
@@ -46,3 +66,4 @@ jobs:
           git diff --cached --quiet || git commit -m "Update TNB data"
           git pull --rebase origin main
           git push
+          echo "Push Schritt abgeschlossen"
