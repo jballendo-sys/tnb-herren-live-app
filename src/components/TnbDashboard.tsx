@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { AppData, Fixture, FixtureStatus, StandingRow, TeamEntry } from "@/types/tnb";
 
 function AppLogo() {
@@ -233,6 +233,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
   const [query, setQuery] = useState("");
   const [ageClass, setAgeClass] = useState("all");
   const [selectedTeamId, setSelectedTeamId] = useState(data.teams[0]?.id ?? "");
+  const [favoriteTeamId, setFavoriteTeamId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
 
   const ageClasses = useMemo(() => {
@@ -251,6 +252,26 @@ export function TnbDashboard({ data }: { data: AppData }) {
   }, [data.teams, query, ageClass]);
 
   const selectedTeam = filteredTeams.find((team) => team.id === selectedTeamId) || filteredTeams[0] || null;
+
+  useEffect(() => {
+    const savedFavorite = window.localStorage.getItem("tnbFavoriteTeamId");
+    if (savedFavorite) {
+      setFavoriteTeamId(savedFavorite);
+      setSelectedTeamId(savedFavorite);
+    }
+  }, []);
+
+  function toggleFavorite(teamId: string) {
+    const nextFavorite = favoriteTeamId === teamId ? null : teamId;
+    setFavoriteTeamId(nextFavorite);
+
+    if (nextFavorite) {
+      window.localStorage.setItem("tnbFavoriteTeamId", nextFavorite);
+    } else {
+      window.localStorage.removeItem("tnbFavoriteTeamId");
+    }
+  }
+
   const selectedAnalytics = selectedTeam ? analyticsFor(selectedTeam) : null;
 
   const grouped = useMemo(() => {
@@ -332,6 +353,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
                 {group.teams.map((team) => {
                   const a = analyticsFor(team);
                   const active = selectedTeam?.id === team.id;
+                    const isFavorite = favoriteTeamId === team.id;
 
                   return (
                     <button
@@ -341,7 +363,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
                         <strong>{team.ageClass}</strong>
-                        <span className="badge">Rang {a.rank ?? "?"}</span>
+                        <span className="badge">{isFavorite ? "Mein Verein" : `Rang ${a.rank ?? "?"}`}</span>
                       </div>
 
                       <div style={{ marginTop: 5, color: active ? "#cbd5e1" : "#64748b", fontSize: 13 }}>
@@ -370,7 +392,22 @@ export function TnbDashboard({ data }: { data: AppData }) {
                     <span className="badge">Gruppe {selectedTeam.groupId}</span>
                   </div>
 
-                  <h2 style={{ fontSize: 28, marginBottom: 4 }}>{selectedTeam.club}</h2>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginTop: 10 }}>
+                <h2 style={{ fontSize: 28, marginBottom: 4 }}>{selectedTeam.club}</h2>
+                <button
+                  type="button"
+                  onClick={() => toggleFavorite(selectedTeam.id)}
+                  className="badge"
+                  style={{
+                    border: "1px solid #dfe9e2",
+                    background: favoriteTeamId === selectedTeam.id ? "#245638" : "#ffffff",
+                    color: favoriteTeamId === selectedTeam.id ? "#ffffff" : "#245638",
+                    cursor: "pointer"
+                  }}
+                >
+                  {favoriteTeamId === selectedTeam.id ? "Mein Verein ✓" : "Als Mein Verein speichern"}
+                </button>
+              </div>
                   <div className="subtitle">
                     {selectedTeam.cityGuess} · {selectedTeam.league} · {selectedTeam.group}
                   </div>
