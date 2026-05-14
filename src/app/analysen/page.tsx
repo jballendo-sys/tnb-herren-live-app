@@ -204,7 +204,7 @@ function TeamTable({
                 <th>Altersklasse</th>
                 <th>Liga</th>
                 <th>Mannschaftspunkte</th>
-                <th>Matchpunkte</th>
+                <th>Matches</th>
                 <th>{valueLabel}</th>
               </tr>
             </thead>
@@ -245,7 +245,7 @@ function TeamTable({
 function GroupTable({ rows }: { rows: any[] }) {
   return (
     <section className="card" style={{ padding: 28, marginTop: 24 }}>
-      <h2 style={{ marginTop: 0 }}>Engste Gruppen</h2>
+      <h2 style={{ marginTop: 0 }}>Enge Tabellenlagen</h2>
       <p className="subtitle" style={{ marginTop: 0 }}>
         Diese Analyse zeigt Gruppen, in denen Platz 1 bis Platz 3 besonders nah beieinanderliegen. Je kleiner der Abstand, desto offener ist die Spitze der Gruppe.
       </p>
@@ -387,11 +387,11 @@ export default async function AnalysenPage({
           <div className="metricValue">{filteredTeamRows.length}</div>
         </div>
         <div className="card">
-          <div className="metricLabel">Dominante Mannschaften</div>
+          <div className="metricLabel">Dominante Teams</div>
           <div className="metricValue">{dominantTeams.length}</div>
         </div>
         <div className="card">
-          <div className="metricLabel">Engste Gruppen</div>
+          <div className="metricLabel">Enge Tabellenlagen</div>
           <div className="metricValue">{tightestGroups.length}</div>
         </div>
         <div className="card">
@@ -403,18 +403,18 @@ export default async function AnalysenPage({
       <AgeFilter activeAge={activeAge} ageClasses={ageClasses} />
 
       <TeamTable
-        title="Dominante Mannschaften"
+        title="Dominante Teams"
         subtitle="Mannschaften, die bislang kein Punktspiel verloren und keinen einzelnen Matchpunkt abgegeben haben."
         rows={dominantTeams}
-        valueLabel="Gewonnene Matchpunkte"
-        value={(row) => row.matchPoints.won}
+        valueLabel="Matchquote"
+        value={(row) => `${Math.round((row.matchPoints.won / Math.max(1, row.matchPoints.won + row.matchPoints.lost)) * 100)}%`}
       />
 
       <TeamTable
-        title="Ø Satzverluste je Punktspiel"
-        subtitle="Diese Analyse zeigt, wie viele Sätze eine Mannschaft durchschnittlich pro gespieltem Punktspiel verliert. Zusätzlich wird der absolute Satzverlust angezeigt."
+        title="Satzbilanz unter Druck"
+        subtitle="Teams mit auffällig vielen verlorenen Sätzen. Diese Kennzahl ist ein Frühindikator dafür, dass Ergebnisse enger oder instabiler sind, auch wenn noch nicht viele Punktspiele verloren wurden."
         rows={setLossesPerPointspiel}
-        valueLabel="Ø Satzverluste je Punktspiel"
+        valueLabel="Verlorene Sätze"
         value={(row) => row.setLossesPerPointspiel}
         averageMetric
       />
@@ -422,10 +422,10 @@ export default async function AnalysenPage({
       <GroupTable rows={tightestGroups} />
 
       <TeamTable
-        title="Mannschaften unter Druck"
-        subtitle="Mannschaften mit vielen verlorenen Matchpunkten, hoher Satzverlustquote oder bereits verlorenen Punktspielen. Die Kennzahl zeigt den Anteil verlorener Matchpunkte."
+        title="Teams unter Druck"
+        subtitle="Mannschaften mit vielen verlorenen Matchesn, hoher Satzverlustquote oder bereits verlorenen Punktspielen. Die Kennzahl zeigt den Anteil verlorener Matches."
         rows={teamsUnderPressure}
-        valueLabel="Verlorene Matchpunkte in %"
+        valueLabel="Verlorene Matches in %"
         value={(row) => `${row.matchLossRate}%`}
       />
     </main>
