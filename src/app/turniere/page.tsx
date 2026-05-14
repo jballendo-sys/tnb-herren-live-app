@@ -208,6 +208,52 @@ function extractYear(dateText: string) {
   return match ? match[1] : "2026";
 }
 
+function getBerlinTodayStart() {
+  const berlinDate = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "Europe/Berlin" })
+  );
+
+  return new Date(
+    berlinDate.getFullYear(),
+    berlinDate.getMonth(),
+    berlinDate.getDate()
+  );
+}
+
+function parseGermanDate(value: string, fallbackYear = 2026) {
+  const match = value.match(/(\d{2})\.(\d{2})\.(20\d{2})?/);
+
+  if (!match) return null;
+
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = match[3] ? Number(match[3]) : fallbackYear;
+
+  return new Date(year, month - 1, day);
+}
+
+function getTournamentEndDate(dateText: string) {
+  const year = Number(extractYear(dateText));
+  const matches = Array.from(dateText.matchAll(/(\d{2})\.(\d{2})\.(20\d{2})?/g));
+
+  if (matches.length === 0) return null;
+
+  const last = matches[matches.length - 1];
+  const day = Number(last[1]);
+  const month = Number(last[2]);
+  const dateYear = last[3] ? Number(last[3]) : year || 2026;
+
+  return new Date(dateYear, month - 1, day);
+}
+
+function isCurrentOrFutureTournament(dateText: string) {
+  const endDate = getTournamentEndDate(dateText);
+
+  if (!endDate) return true;
+
+  return endDate >= getBerlinTodayStart();
+}
+
 function extractAgeClasses(block: string) {
   return AGE_CLASSES.filter((age) => {
     const pattern = new RegExp(`\\b${age.replace(" ", "\\s+")}\\b`, "i");
@@ -281,6 +327,7 @@ function parseTournaments(source: Awaited<ReturnType<typeof fetchSource>>) {
     })
     .filter((item) => item.year === "2026")
     .filter((item) => ["05", "06", "07", "08", "09", "10", "11", "12"].includes(item.month))
+    .filter((item) => isCurrentOrFutureTournament(item.date))
     .filter((item) => item.ageClasses.length > 0);
 }
 
@@ -370,7 +417,7 @@ export default async function TurnierePage({
           <div className="badge">Turnierfinder</div>
           <h1 className="title">TNB und Westfalen Turniersuche</h1>
           <p className="subtitle">
-            Diese Seite lädt Turniere aus den öffentlichen nuLiga Kalendern für Mai bis Dezember 2026.
+            Diese Seite lädt aktuelle und kommende Turniere aus den öffentlichen nuLiga Kalendern für Mai bis Dezember 2026. Vergangene Turniere werden automatisch ausgeblendet.
             Du kannst nach Verband, Altersklasse, Monat und Ort filtern. Die Umkreissuche nutzt bekannte Ortskoordinaten,
             zum Beispiel Hameln, Hannover, Bremen, Osnabrück, Bielefeld, Münster oder Dortmund.
           </p>
