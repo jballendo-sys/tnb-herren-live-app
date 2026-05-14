@@ -1,6 +1,8 @@
+import { MainNav } from "@/components/MainNav";
 ﻿export default function ImpressumPage() {
   return (
     <main className="container">
+      <MainNav />
       <section className="card" style={{ maxWidth: 900, margin: "40px auto" }}>
         <h1 className="title">Impressum</h1>
 

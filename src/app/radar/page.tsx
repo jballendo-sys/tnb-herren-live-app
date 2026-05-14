@@ -1,3 +1,4 @@
+import { MainNav } from "@/components/MainNav";
 ﻿import { loadData } from "@/lib/storage";
 
 const HM_PLACES = [
@@ -171,6 +172,7 @@ export default async function RadarPage() {
 
   return (
     <main className="container">
+      <MainNav />
       <section className="header">
         <div>
           <div className="badge">Spieltagsradar</div>

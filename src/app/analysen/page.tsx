@@ -1,3 +1,4 @@
+import { MainNav } from "@/components/MainNav";
 ﻿import { loadData } from "@/lib/storage";
 
 type SearchParams = {
@@ -360,6 +361,7 @@ export default async function AnalysenPage({
 
   return (
     <main className="container">
+      <MainNav />
       <section className="header">
         <div>
           <div className="badge">Analyse Center</div>

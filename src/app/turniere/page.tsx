@@ -1,3 +1,4 @@
+import { MainNav } from "@/components/MainNav";
 ﻿export const dynamic = "force-dynamic";
 
 type SearchParams = {
@@ -363,6 +364,7 @@ export default async function TurnierePage({
 
   return (
     <main className="container">
+      <MainNav />
       <section className="header">
         <div>
           <div className="badge">Turnierfinder</div>

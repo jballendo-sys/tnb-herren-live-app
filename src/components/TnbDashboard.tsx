@@ -312,6 +312,27 @@ export function TnbDashboard({ data }: { data: AppData }) {
         </div>
       </section>
 
+      <nav
+        aria-label="Hauptnavigation"
+        className="card"
+        style={{
+          marginTop: 18,
+          marginBottom: 22,
+          padding: 14,
+          display: "flex",
+          gap: 10,
+          flexWrap: "wrap",
+          alignItems: "center"
+        }}
+      >
+        <a className="badge" href="/" style={{ textDecoration: "none", fontWeight: 900 }}>Start</a>
+        <a className="badge" href="/analysen" style={{ textDecoration: "none", fontWeight: 900 }}>Analysen</a>
+        <a className="badge" href="/duelle" style={{ textDecoration: "none", fontWeight: 900 }}>Top Begegnungen</a>
+        <a className="badge" href="/turniere" style={{ textDecoration: "none", fontWeight: 900 }}>Turniere</a>
+        <a className="badge" href="/radar" style={{ textDecoration: "none", fontWeight: 900 }}>Radar</a>
+        <a className="badge" href="/impressum" style={{ textDecoration: "none", fontWeight: 900 }}>Impressum</a>
+      </nav>
+
       <section className="metrics">
         <div className="card"><div className="metricLabel">Mannschaften</div><div className="metricValue">{filteredTeams.length}</div></div>
         <div className="card"><div className="metricLabel">Vereine</div><div className="metricValue">{clubs}</div></div>

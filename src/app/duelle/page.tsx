@@ -1,3 +1,4 @@
+import { MainNav } from "@/components/MainNav";
 ﻿import { loadData } from "@/lib/storage";
 
 function parseGermanDate(value: string | null | undefined) {
@@ -240,6 +241,7 @@ export default async function DuellePage() {
 
   return (
     <main className="container">
+      <MainNav />
       <section className="header">
         <div>
           <div className="badge">TNB Top 10 Begegnungen</div>
