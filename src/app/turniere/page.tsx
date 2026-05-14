@@ -1,13 +1,40 @@
-﻿const SOURCES = [
+﻿export const dynamic = "force-dynamic";
+
+type SearchParams = {
+  verband?: string;
+  altersklasse?: string;
+  monat?: string;
+  ort?: string;
+  radius?: string;
+};
+
+type Tournament = {
+  id: string;
+  association: string;
+  sourceLabel: string;
+  name: string;
+  date: string;
+  month: string;
+  year: string;
+  ageClasses: string[];
+  location: string;
+  distanceKm: number | null;
+  text: string;
+  url: string;
+};
+
+const SOURCES = [
   {
     association: "TNB",
     label: "Tennisverband Niedersachsen Bremen",
-    url: "https://tnb.liga.nu/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/tournamentCalendar?federation=TNB"
+    federation: "TNB",
+    host: "https://tnb.liga.nu"
   },
   {
     association: "WTV",
     label: "Westfälischer Tennis Verband",
-    url: "https://wtv.liga.nu/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/tournamentCalendar?federation=WTV"
+    federation: "WTV",
+    host: "https://wtv.liga.nu"
   }
 ];
 
@@ -26,12 +53,8 @@ const AGE_CLASSES = [
   "Herren 80"
 ];
 
-const MONTHS_2026 = [
+const MONTHS_2026: [string, string][] = [
   ["all", "Alle Monate"],
-  ["01", "Januar 2026"],
-  ["02", "Februar 2026"],
-  ["03", "März 2026"],
-  ["04", "April 2026"],
   ["05", "Mai 2026"],
   ["06", "Juni 2026"],
   ["07", "Juli 2026"],
@@ -42,38 +65,105 @@ const MONTHS_2026 = [
   ["12", "Dezember 2026"]
 ];
 
-type SearchParams = {
-  verband?: string;
-  altersklasse?: string;
-  monat?: string;
+const CITY_COORDS: Record<string, { lat: number; lon: number }> = {
+  hameln: { lat: 52.1031, lon: 9.3560 },
+  emmerthal: { lat: 52.0500, lon: 9.3833 },
+  hannover: { lat: 52.3759, lon: 9.7320 },
+  hildesheim: { lat: 52.1548, lon: 9.9579 },
+  braunschweig: { lat: 52.2689, lon: 10.5268 },
+  wolfsburg: { lat: 52.4227, lon: 10.7865 },
+  salzgitter: { lat: 52.1379, lon: 10.3899 },
+  celle: { lat: 52.6226, lon: 10.0805 },
+  göttingen: { lat: 51.5413, lon: 9.9158 },
+  lüneburg: { lat: 53.2464, lon: 10.4115 },
+  oldenburg: { lat: 53.1435, lon: 8.2146 },
+  osnabrück: { lat: 52.2799, lon: 8.0472 },
+  bremen: { lat: 53.0793, lon: 8.8017 },
+  bremerhaven: { lat: 53.5396, lon: 8.5809 },
+  bielefeld: { lat: 52.0302, lon: 8.5325 },
+  paderborn: { lat: 51.7189, lon: 8.7575 },
+  münster: { lat: 51.9607, lon: 7.6261 },
+  dortmund: { lat: 51.5136, lon: 7.4653 },
+  bochum: { lat: 51.4818, lon: 7.2162 },
+  essen: { lat: 51.4556, lon: 7.0116 },
+  gütersloh: { lat: 51.9069, lon: 8.3785 },
+  herford: { lat: 52.1146, lon: 8.6734 },
+  minden: { lat: 52.2895, lon: 8.9146 },
+  detmold: { lat: 51.9385, lon: 8.8732 },
+  hamm: { lat: 51.6739, lon: 7.8159 },
+  soest: { lat: 51.5710, lon: 8.1058 },
+  arnsberg: { lat: 51.3967, lon: 8.0644 },
+  siegen: { lat: 50.8838, lon: 8.0200 },
+  hagen: { lat: 51.3671, lon: 7.4633 },
+  iserlohn: { lat: 51.3755, lon: 7.7028 },
+  warendorf: { lat: 51.9511, lon: 7.9874 }
 };
 
 function selected(value: string | undefined, fallback: string) {
-  return value && value.length > 0 ? value : fallback;
+  return value && value.trim().length > 0 ? value.trim() : fallback;
 }
 
-function sourceHref(verband: string, altersklasse: string, monat: string) {
-  const params = new URLSearchParams();
+function hrefFor(params: Record<string, string>) {
+  const search = new URLSearchParams();
 
-  if (verband !== "all") params.set("verband", verband);
-  if (altersklasse !== "all") params.set("altersklasse", altersklasse);
-  if (monat !== "all") params.set("monat", monat);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value && value !== "all") search.set(key, value);
+  });
 
-  const query = params.toString();
+  const query = search.toString();
   return query ? `/turniere?${query}` : "/turniere";
 }
 
-async function fetchSource(source: typeof SOURCES[number]) {
-  const response = await fetch(source.url, {
-    next: { revalidate: 60 * 60 * 6 }
-  });
+function formatDateForUrl(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
-  const html = await response.text();
+function buildWeeklyDates2026() {
+  const dates: string[] = [];
+  const start = new Date(2026, 4, 1);
+  const end = new Date(2026, 11, 31);
 
-  return {
-    ...source,
-    html
-  };
+  for (const current = new Date(start); current <= end; current.setDate(current.getDate() + 7)) {
+    dates.push(formatDateForUrl(current));
+  }
+
+  return dates;
+}
+
+function buildSourceUrls() {
+  const dates = buildWeeklyDates2026();
+
+  return SOURCES.flatMap((source) =>
+    dates.map((date) => ({
+      association: source.association,
+      sourceLabel: source.label,
+      url: `${source.host}/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/tournamentCalendar?date=${date}&federation=${source.federation}`,
+      date
+    }))
+  );
+}
+
+async function fetchSource(source: ReturnType<typeof buildSourceUrls>[number]) {
+  try {
+    const response = await fetch(source.url, {
+      next: { revalidate: 60 * 60 * 6 }
+    });
+
+    const html = await response.text();
+
+    return {
+      ...source,
+      html
+    };
+  } catch {
+    return {
+      ...source,
+      html: ""
+    };
+  }
 }
 
 function stripHtml(value: string) {
@@ -83,12 +173,14 @@ function stripHtml(value: string) {
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, "\"")
+    .replace(/&#39;/g, "'")
     .replace(/\s+/g, " ")
     .trim();
 }
 
 function splitTournamentBlocks(text: string) {
-  const datePattern = /(\d{2}\.\d{2}\.\s*bis\s*\d{2}\.\d{2}\.|\d{2}\.\d{2}\.\s*bis\s*\d{2}\.\d{2}\.\d{4}|\d{2}\.\d{2}\.\d{4}\s*bis\s*\d{2}\.\d{2}\.\d{4}|\d{2}\.\d{2}\.\d{4})/g;
+  const datePattern = /(\d{2}\.\d{2}\.\d{4}\s*bis\s*\d{2}\.\d{2}\.\d{4}|\d{2}\.\d{2}\.\s*bis\s*\d{2}\.\d{2}\.\d{4}|\d{2}\.\d{2}\.\s*bis\s*\d{2}\.\d{2}\.|\d{2}\.\d{2}\.\d{4})/g;
   const matches = Array.from(text.matchAll(datePattern));
 
   if (matches.length === 0) return [];
@@ -101,7 +193,7 @@ function splitTournamentBlocks(text: string) {
 }
 
 function extractDate(block: string) {
-  const match = block.match(/(\d{2}\.\d{2}\.(?:\d{4})?\s*bis\s*\d{2}\.\d{2}\.(?:\d{4})?|\d{2}\.\d{2}\.\d{4})/);
+  const match = block.match(/(\d{2}\.\d{2}\.\d{4}\s*bis\s*\d{2}\.\d{2}\.\d{4}|\d{2}\.\d{2}\.\s*bis\s*\d{2}\.\d{2}\.\d{4}|\d{2}\.\d{2}\.\s*bis\s*\d{2}\.\d{2}\.|\d{2}\.\d{2}\.\d{4})/);
   return match ? match[1].replace(/\s+/g, " ") : "Datum offen";
 }
 
@@ -122,13 +214,41 @@ function extractAgeClasses(block: string) {
   });
 }
 
+function extractLocation(block: string) {
+  const lower = block.toLowerCase();
+
+  const match = Object.keys(CITY_COORDS).find((city) => lower.includes(city));
+
+  if (!match) return "Ort nicht erkannt";
+
+  return match.charAt(0).toUpperCase() + match.slice(1);
+}
+
 function extractName(block: string) {
   const date = extractDate(block);
   const afterDate = block.replace(date, "").trim();
-  const markerIndex = afterDate.search(/\b(Herren|Damen|Junior|Senior|LK|DTB|Veranstalter|Austragungsort)\b/i);
-  const candidate = markerIndex > 0 ? afterDate.slice(0, markerIndex).trim() : afterDate.slice(0, 140).trim();
+  const markerIndex = afterDate.search(/\b(Herren|Damen|Junior|LK|DTB|Veranstalter|Austragungsort|Meldeschluss|Nenngeld|Nebenrunde)\b/i);
+  const candidate = markerIndex > 4 ? afterDate.slice(0, markerIndex).trim() : afterDate.slice(0, 120).trim();
 
   return candidate || "Turnier";
+}
+
+function normalizeCity(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function distanceKm(from: { lat: number; lon: number }, to: { lat: number; lon: number }) {
+  const radius = 6371;
+  const dLat = ((to.lat - from.lat) * Math.PI) / 180;
+  const dLon = ((to.lon - from.lon) * Math.PI) / 180;
+  const lat1 = (from.lat * Math.PI) / 180;
+  const lat2 = (to.lat * Math.PI) / 180;
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+
+  return Math.round(radius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
 function parseTournaments(source: Awaited<ReturnType<typeof fetchSource>>) {
@@ -136,28 +256,59 @@ function parseTournaments(source: Awaited<ReturnType<typeof fetchSource>>) {
   const blocks = splitTournamentBlocks(text);
 
   return blocks
-    .map((block, index) => {
+    .map((block, index): Tournament => {
       const date = extractDate(block);
       const month = extractMonth(date);
       const year = extractYear(date);
       const ageClasses = extractAgeClasses(block);
+      const location = extractLocation(block);
 
       return {
-        id: `${source.association}-${index}`,
+        id: `${source.association}-${source.date}-${index}`,
         association: source.association,
-        sourceLabel: source.label,
+        sourceLabel: source.sourceLabel,
         name: extractName(block),
         date,
         month,
         year,
         ageClasses,
+        location,
+        distanceKm: null,
         text: block,
         url: source.url
       };
     })
-    .filter((item) => item.ageClasses.length > 0)
     .filter((item) => item.year === "2026")
-    .slice(0, 240);
+    .filter((item) => ["05", "06", "07", "08", "09", "10", "11", "12"].includes(item.month))
+    .filter((item) => item.ageClasses.length > 0);
+}
+
+function dedupeTournaments(items: Tournament[]) {
+  const map = new Map<string, Tournament>();
+
+  for (const item of items) {
+    const key = `${item.association}|${item.date}|${item.name}`;
+    if (!map.has(key)) map.set(key, item);
+  }
+
+  return Array.from(map.values());
+}
+
+function enrichDistances(items: Tournament[], origin: string) {
+  const originCoords = CITY_COORDS[normalizeCity(origin)];
+
+  if (!originCoords) return items;
+
+  return items.map((item) => {
+    const locationCoords = CITY_COORDS[normalizeCity(item.location)];
+
+    if (!locationCoords) return item;
+
+    return {
+      ...item,
+      distanceKm: distanceKm(originCoords, locationCoords)
+    };
+  });
 }
 
 export default async function TurnierePage({
@@ -168,22 +319,47 @@ export default async function TurnierePage({
   const activeAssociation = selected(searchParams?.verband, "all");
   const activeAge = selected(searchParams?.altersklasse, "all");
   const activeMonth = selected(searchParams?.monat, "all");
+  const activeLocation = selected(searchParams?.ort, "");
+  const activeRadius = Number(selected(searchParams?.radius, "100"));
 
-  const sourceResults = await Promise.all(SOURCES.map(fetchSource));
-  const tournaments = sourceResults.flatMap(parseTournaments);
+  const sourceResults = await Promise.all(buildSourceUrls().map(fetchSource));
+  const allTournaments = dedupeTournaments(sourceResults.flatMap(parseTournaments));
+  const withDistances = enrichDistances(allTournaments, activeLocation);
 
-  const filtered = tournaments
+  const filtered = withDistances
     .filter((item) => activeAssociation === "all" || item.association === activeAssociation)
     .filter((item) => activeAge === "all" || item.ageClasses.includes(activeAge))
-    .filter((item) => activeMonth === "all" || item.month === activeMonth);
+    .filter((item) => activeMonth === "all" || item.month === activeMonth)
+    .filter((item) => {
+      if (!activeLocation) return true;
+
+      const knownDistanceMatch = item.distanceKm !== null && item.distanceKm <= activeRadius;
+      const textMatch = item.text.toLowerCase().includes(activeLocation.toLowerCase());
+
+      return knownDistanceMatch || textMatch;
+    })
+    .sort((a, b) => {
+      if (a.distanceKm !== null && b.distanceKm !== null) return a.distanceKm - b.distanceKm;
+      if (a.distanceKm !== null) return -1;
+      if (b.distanceKm !== null) return 1;
+      return a.date.localeCompare(b.date, "de");
+    });
 
   const monthlyCounts = MONTHS_2026
     .filter(([value]) => value !== "all")
     .map(([value, label]) => ({
       value,
       label,
-      count: tournaments.filter((item) => item.month === value).length
+      count: withDistances.filter((item) => item.month === value).length
     }));
+
+  const baseParams = {
+    verband: activeAssociation,
+    altersklasse: activeAge,
+    monat: activeMonth,
+    ort: activeLocation,
+    radius: String(activeRadius)
+  };
 
   return (
     <main className="container">
@@ -192,8 +368,9 @@ export default async function TurnierePage({
           <div className="badge">Turnierfinder</div>
           <h1 className="title">TNB und Westfalen Turniersuche</h1>
           <p className="subtitle">
-            Diese Seite bündelt Turniere aus den öffentlichen nuLiga Turnierkalendern für das Jahr 2026.
-            Du kannst nach Verband, Altersklasse und Monat filtern. Die Umkreissuche ergänzen wir im nächsten Schritt.
+            Diese Seite lädt Turniere aus den öffentlichen nuLiga Kalendern für Mai bis Dezember 2026.
+            Du kannst nach Verband, Altersklasse, Monat und Ort filtern. Die Umkreissuche nutzt bekannte Ortskoordinaten,
+            zum Beispiel Hameln, Hannover, Bremen, Osnabrück, Bielefeld, Münster oder Dortmund.
           </p>
         </div>
 
@@ -220,7 +397,7 @@ export default async function TurnierePage({
           <div className="metricValue">{filtered.filter((item) => item.association === "WTV").length}</div>
         </div>
         <div className="card">
-          <div className="metricLabel">Ausgewählter Monat</div>
+          <div className="metricLabel">Monat</div>
           <div className="metricValue" style={{ fontSize: 22 }}>
             {MONTHS_2026.find(([value]) => value === activeMonth)?.[1] || "Alle Monate"}
           </div>
@@ -228,13 +405,42 @@ export default async function TurnierePage({
       </section>
 
       <section className="card" style={{ padding: 22, marginTop: 24 }}>
-        <div className="metricLabel" style={{ marginBottom: 12 }}>Monat 2026</div>
+        <form action="/turniere" style={{ display: "grid", gap: 14, gridTemplateColumns: "minmax(240px, 1fr) 180px 160px auto", alignItems: "end" }}>
+          <div>
+            <div className="metricLabel" style={{ marginBottom: 8 }}>Ort oder Stadt</div>
+            <input
+              name="ort"
+              defaultValue={activeLocation}
+              placeholder="zum Beispiel Hameln"
+              style={{ width: "100%", padding: "14px 16px", borderRadius: 16, border: "1px solid #dfe9e2", fontSize: 16 }}
+            />
+          </div>
+
+          <div>
+            <div className="metricLabel" style={{ marginBottom: 8 }}>Umkreis</div>
+            <select name="radius" defaultValue={String(activeRadius)} style={{ width: "100%", padding: "14px 16px", borderRadius: 16, border: "1px solid #dfe9e2", fontSize: 16 }}>
+              <option value="25">25 km</option>
+              <option value="50">50 km</option>
+              <option value="100">100 km</option>
+              <option value="150">150 km</option>
+              <option value="250">250 km</option>
+            </select>
+          </div>
+
+          <input type="hidden" name="verband" value={activeAssociation === "all" ? "" : activeAssociation} />
+          <input type="hidden" name="altersklasse" value={activeAge === "all" ? "" : activeAge} />
+          <input type="hidden" name="monat" value={activeMonth === "all" ? "" : activeMonth} />
+
+          <button className="button" type="submit">Umkreis suchen</button>
+        </form>
+
+        <div className="metricLabel" style={{ marginTop: 24, marginBottom: 12 }}>Monat 2026</div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 22 }}>
           {MONTHS_2026.map(([value, label]) => (
             <a
               key={value}
               className="badge"
-              href={sourceHref(activeAssociation, activeAge, value)}
+              href={hrefFor({ ...baseParams, monat: value })}
               style={{
                 textDecoration: "none",
                 background: activeMonth === value ? "#245638" : undefined,
@@ -256,7 +462,7 @@ export default async function TurnierePage({
             <a
               key={value}
               className="badge"
-              href={sourceHref(value, activeAge, activeMonth)}
+              href={hrefFor({ ...baseParams, verband: value })}
               style={{
                 textDecoration: "none",
                 background: activeAssociation === value ? "#245638" : undefined,
@@ -272,7 +478,7 @@ export default async function TurnierePage({
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <a
             className="badge"
-            href={sourceHref(activeAssociation, "all", activeMonth)}
+            href={hrefFor({ ...baseParams, altersklasse: "all" })}
             style={{
               textDecoration: "none",
               background: activeAge === "all" ? "#245638" : undefined,
@@ -286,7 +492,7 @@ export default async function TurnierePage({
             <a
               key={age}
               className="badge"
-              href={sourceHref(activeAssociation, age, activeMonth)}
+              href={hrefFor({ ...baseParams, altersklasse: age })}
               style={{
                 textDecoration: "none",
                 background: activeAge === age ? "#245638" : undefined,
@@ -305,7 +511,7 @@ export default async function TurnierePage({
           {monthlyCounts.map((item) => (
             <a
               key={item.value}
-              href={sourceHref(activeAssociation, activeAge, item.value)}
+              href={hrefFor({ ...baseParams, monat: item.value })}
               className="card"
               style={{
                 padding: 16,
@@ -327,7 +533,7 @@ export default async function TurnierePage({
           <p className="subtitle">Für diese Auswahl wurden aktuell keine Turniere gefunden.</p>
         ) : (
           <div style={{ display: "grid", gap: 14 }}>
-            {filtered.slice(0, 80).map((item) => (
+            {filtered.slice(0, 120).map((item) => (
               <article
                 key={item.id}
                 style={{
@@ -351,6 +557,10 @@ export default async function TurnierePage({
                   <div style={{ fontWeight: 900 }}>{item.name}</div>
                   <div style={{ color: "#66746c", fontSize: 14, marginTop: 6 }}>
                     {item.ageClasses.join(" · ")}
+                  </div>
+                  <div style={{ color: "#66746c", fontSize: 13, marginTop: 6 }}>
+                    Ort: {item.location}
+                    {item.distanceKm !== null ? ` · ca. ${item.distanceKm} km` : ""}
                   </div>
                   <div style={{ color: "#66746c", fontSize: 13, marginTop: 6 }}>
                     Quelle: {item.sourceLabel}
