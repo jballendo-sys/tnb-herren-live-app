@@ -2,8 +2,12 @@
 
 on:
   schedule:
-    - cron: "0 5 * * *"
-    - cron: "0 9 * * *"
+    - cron: "17 7 * * *"
+      timezone: "Europe/Berlin"
+    - cron: "17 11 * * *"
+      timezone: "Europe/Berlin"
+    - cron: "17 19 * * *"
+      timezone: "Europe/Berlin"
   workflow_dispatch:
 
 permissions:
