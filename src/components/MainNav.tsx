@@ -4,7 +4,6 @@
     { href: "/analysen", label: "Analysen" },
     { href: "/duelle", label: "Top Begegnungen" },
     { href: "/turniere", label: "Turniere" },
-    { href: "/radar", label: "Radar" },
     { href: "/impressum", label: "Impressum" }
   ];
 
