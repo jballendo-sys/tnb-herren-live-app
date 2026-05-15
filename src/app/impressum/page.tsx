@@ -1,9 +1,11 @@
-import { MainNav } from "@/components/MainNav";
-﻿export default function ImpressumPage() {
+﻿import { MainNav } from "@/components/MainNav";
+
+export default function ImpressumPage() {
   return (
     <main className="container">
       <MainNav />
-      <section className="card" style={{ maxWidth: 900, margin: "40px auto" }}>
+
+      <section className="card" style={{ maxWidth: 900, margin: "40px auto", padding: 32 }}>
         <h1 className="title">Impressum</h1>
 
         <p className="subtitle">
@@ -13,8 +15,7 @@ import { MainNav } from "@/components/MainNav";
         <h2>Angaben zum Anbieter</h2>
         <p>
           Dr. Jens Ballendowitsch<br />
-          Emmerthal<br />
-          31860<br />
+          31860 Emmerthal<br />
           Deutschland
         </p>
 
@@ -26,29 +27,35 @@ import { MainNav } from "@/components/MainNav";
         <h2>Verantwortlich für den Inhalt</h2>
         <p>
           Dr. Jens Ballendowitsch<br />
-          Emmerthal<br />
-          31860<br />
+          31860 Emmerthal<br />
           Deutschland
         </p>
 
         <h2>Hinweis zur App</h2>
         <p>
-          MatchRadar TNB ist eine inoffizielle Auswertung öffentlich zugänglicher nuLiga Daten.
-          Die App steht in keiner offiziellen Verbindung zum Tennisverband Niedersachsen Bremen
-          oder zu nuLiga. Für die verbindlichen Ergebnisse, Tabellen und Spielberichte sind die
-          jeweiligen offiziellen nuLiga Seiten maßgeblich.
+          Der TNB Herren Kompass ist eine inoffizielle Auswertung öffentlich zugänglicher nuLiga Daten.
+          Die App steht in keiner offiziellen Verbindung zum Tennisverband Niedersachsen Bremen, zum
+          Westfälischen Tennis Verband, zum Deutschen Tennis Bund, zu nuLiga oder zu einem anderen
+          Tennisverband. Für verbindliche Ergebnisse, Tabellen, Spielpläne und Turnierinformationen sind
+          ausschließlich die jeweiligen offiziellen Seiten maßgeblich.
         </p>
 
-        <h2>Datenquelle</h2>
+        <h2>Datenquellen</h2>
         <p>
-          Die dargestellten Informationen werden aus öffentlich zugänglichen nuLiga Seiten des TNB
-          abgerufen und automatisiert aufbereitet.
+          Die dargestellten Informationen werden aus öffentlich zugänglichen nuLiga Seiten abgerufen und
+          automatisiert aufbereitet. Die Darstellung kann unvollständig, verzögert oder fehlerhaft sein.
         </p>
 
         <h2>Haftung für Inhalte</h2>
         <p>
-          Die Inhalte dieser App wurden mit Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit
-          und Aktualität der dargestellten Daten wird keine Gewähr übernommen.
+          Die Inhalte dieser App wurden mit Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und
+          Aktualität der dargestellten Daten wird keine Gewähr übernommen.
+        </p>
+
+        <h2>Lokale Speicherung</h2>
+        <p>
+          Die Funktion „Mein Verein“ speichert die ausgewählte Mannschaft ausschließlich lokal im Browser
+          des Nutzers. Es erfolgt keine serverseitige Speicherung dieses Favoriten durch den Anbieter.
         </p>
 
         <p style={{ marginTop: 32 }}>
