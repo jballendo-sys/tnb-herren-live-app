@@ -74,6 +74,66 @@ function splitRecord(value: string | null) {
   };
 }
 
+function formatRank(rank: unknown) {
+  const value = Number(rank);
+
+  if (!Number.isFinite(value) || value <= 0) {
+    return "Rang offen";
+  }
+
+  return `Rang ${value}`;
+}
+
+function formatRankValue(rank: unknown) {
+  const value = Number(rank);
+
+  if (!Number.isFinite(value) || value <= 0) {
+    return "offen";
+  }
+
+  return String(value);
+}
+
+function formatRankLabel(rank: unknown) {
+  const value = Number(rank);
+
+  if (!Number.isFinite(value) || value <= 0) {
+    return "Rang offen";
+  }
+
+  return `Rang ${value}`;
+}
+
+function formatRankNumber(rank: unknown) {
+  const value = Number(rank);
+
+  if (!Number.isFinite(value) || value <= 0) {
+    return "offen";
+  }
+
+  return String(value);
+}
+
+function rankLabel(rank: unknown) {
+  const value = Number(rank);
+
+  if (!Number.isFinite(value) || value <= 0) {
+    return "Rang offen";
+  }
+
+  return `Rang ${value}`;
+}
+
+function rankValue(rank: unknown) {
+  const value = Number(rank);
+
+  if (!Number.isFinite(value) || value <= 0) {
+    return "offen";
+  }
+
+  return String(value);
+}
+
 function normalizeName(value: string | null | undefined) {
   return String(value ?? "")
     .toLowerCase()
@@ -329,7 +389,6 @@ export function TnbDashboard({ data }: { data: AppData }) {
         <a className="badge" href="/analysen" style={{ textDecoration: "none", fontWeight: 900 }}>Analysen</a>
         <a className="badge" href="/duelle" style={{ textDecoration: "none", fontWeight: 900 }}>Top Begegnungen</a>
         <a className="badge" href="/turniere" style={{ textDecoration: "none", fontWeight: 900 }}>Turniere</a>
-        <a className="badge" href="/radar" style={{ textDecoration: "none", fontWeight: 900 }}>Radar</a>
         <a className="badge" href="/impressum" style={{ textDecoration: "none", fontWeight: 900 }}>Impressum</a>
       </nav>
 
@@ -384,7 +443,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
                         <strong>{team.ageClass}</strong>
-                        <span className="badge">{isFavorite ? "Mein Verein" : `Rang ${a.rank ?? "?"}`}</span>
+                        <span className="badge">{isFavorite ? "Mein Verein" : rankLabel(a.rank)}</span>
                       </div>
 
                       <div style={{ marginTop: 5, color: active ? "#cbd5e1" : "#64748b", fontSize: 13 }}>
@@ -436,7 +495,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
 
                 <div style={{ textAlign: "right" }}>
                   <div className="metricLabel">Rang</div>
-                  <div className="metricValue">{selectedAnalytics.rank ?? "?"}</div>
+                  <div className="metricValue">{formatRankValue(selectedAnalytics.rank)}</div>
                 </div>
               </div>
 
@@ -508,7 +567,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
                     <tbody>
                       {selectedTeam.standings.map((row: StandingRow) => (
                         <tr key={row.team} style={{ background: normalizeName(row.team) === normalizeName(selectedTeam.club) ? "#f8fafc" : "white" }}>
-                          <td>{row.rank}</td>
+                          <td>{formatRankValue(row.rank)}</td>
                           <td><strong>{row.team}</strong></td>
                           <td>{row.played}</td>
                           <td>{row.wins}</td>
@@ -537,7 +596,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
                   <div className="card">
                     <strong>Automatische Einschätzung</strong>
                     <p className="subtitle">
-                      {selectedTeam.club} steht aktuell auf Rang {selectedAnalytics.rank ?? "?"} mit {selectedAnalytics.points} Tabellenpunkten.
+                      {selectedTeam.club} steht aktuell auf {formatRank(selectedAnalytics.rank)} mit {selectedAnalytics.points} Tabellenpunkten.
                       Die Match Quote liegt bei {selectedAnalytics.matchRate} Prozent, die Satz Quote bei {selectedAnalytics.setRate} Prozent.
                       Bisher wurden {selectedAnalytics.completedFixtures} Begegnungen abgeschlossen, {selectedAnalytics.openFixtures} sind offen.
                     </p>
