@@ -295,9 +295,9 @@ export function TnbDashboard({ data }: { data: AppData }) {
         <div>
           <AppLogo />
 <div className="badge" style={{ marginTop: 18 }}>Inoffizielle Auswertung öffentlicher nuLiga Daten</div>
-<h1 className="title" style={{ marginTop: 18 }}>TNB Herren Kompass</h1>
+<h1 className="title" style={{ marginTop: 18, marginBottom: 8 }}>TNB Herren Kompass</h1>
 <p className="subtitle">
-  Der TNB Herren Kompass bündelt öffentliche nuLiga Daten und zeigt, welche Vereine, Mannschaften, Begegnungen und Entwicklungen im TNB Herrenbereich besonders relevant sind. Du findest deinen Verein schnell, siehst die wichtigsten Mannschaftsdaten und springst direkt zu Top Begegnungen und Analysen.
+  Finde Vereine, Mannschaften, Tabellen und relevante Entwicklungen im TNB Herrenbereich schneller als über einzelne nuLiga Gruppen.
 </p>
         </div>
 
@@ -347,7 +347,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
           className="input"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Verein oder Ort suchen, zum Beispiel Hameln, Hannover, Emmerthal, TC, TV"
+          placeholder="Verein, Ort oder Mannschaft suchen, zum Beispiel Emmerthal, Hameln, Hannover, TC, TV"
         />
 
         <select className="select" value={ageClass} onChange={(event) => setAgeClass(event.target.value)}>
