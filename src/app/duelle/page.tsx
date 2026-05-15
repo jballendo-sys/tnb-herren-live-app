@@ -294,11 +294,11 @@ export default async function DuellePage() {
       </section>
 
       <section className="card" style={{ padding: 28, marginTop: 24 }}>
-        <h2 style={{ marginTop: 0 }}>Top 10 im {monthLabel(today)}</h2>
+        <h2 style={{ marginTop: 0 }}>Top Begegnungen im {monthLabel(today)}</h2>
 
         {topMatches.length === 0 ? (
           <p className="subtitle">
-            Für den aktuellen Monat wurden aktuell keine Begegnungen gefunden, die den Top Kriterien entsprechen.
+            Für diesen Monat wurden aktuell keine Begegnungen gefunden, die den Top Kriterien entsprechen.
           </p>
         ) : (
           <div style={{ display: "grid", gap: 14 }}>
