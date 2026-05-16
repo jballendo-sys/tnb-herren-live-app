@@ -197,6 +197,89 @@ function sortTopMatches(a: any, b: any) {
   return left - right;
 }
 
+
+function parseDuelleRecord(value: string | null | undefined) {
+  const [wonRaw, lostRaw] = String(value || "0:0").split(":").map(Number);
+  const won = Number.isFinite(wonRaw) ? wonRaw : 0;
+  const lost = Number.isFinite(lostRaw) ? lostRaw : 0;
+
+  return {
+    won,
+    lost,
+    total: won + lost
+  };
+}
+
+function normalizeDuelleName(value: string | null | undefined) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function findStandingForTeam(item: any, teamName: string) {
+  return (item.standings || []).find((row: any) => normalizeDuelleName(row.team) === normalizeDuelleName(teamName));
+}
+
+function undefeatedSetLosses(item: any) {
+  const homeStanding = findStandingForTeam(item, item.homeTeam);
+  const awayStanding = findStandingForTeam(item, item.awayTeam);
+
+  const homeSets = parseDuelleRecord(homeStanding?.sets);
+  const awaySets = parseDuelleRecord(awayStanding?.sets);
+
+  return homeSets.lost + awaySets.lost;
+}
+
+function undefeatedSetWinRate(item: any) {
+  const homeStanding = findStandingForTeam(item, item.homeTeam);
+  const awayStanding = findStandingForTeam(item, item.awayTeam);
+
+  const homeSets = parseDuelleRecord(homeStanding?.sets);
+  const awaySets = parseDuelleRecord(awayStanding?.sets);
+
+  const won = homeSets.won + awaySets.won;
+  const total = homeSets.total + awaySets.total;
+
+  return total > 0 ? won / total : 0;
+}
+
+function compareTopMatches(a: any, b: any) {
+  if (a.classification.priority !== b.classification.priority) {
+    return a.classification.priority - b.classification.priority;
+  }
+
+  if (a.classification.priority === 2) {
+    const aSetLosses = undefeatedSetLosses(a);
+    const bSetLosses = undefeatedSetLosses(b);
+
+    if (aSetLosses !== bSetLosses) {
+      return aSetLosses - bSetLosses;
+    }
+
+    const aSetWinRate = undefeatedSetWinRate(a);
+    const bSetWinRate = undefeatedSetWinRate(b);
+
+    if (aSetWinRate !== bSetWinRate) {
+      return bSetWinRate - aSetWinRate;
+    }
+  }
+
+  const aDate = parseGermanFixtureDate(a.date)?.getTime() ?? 0;
+  const bDate = parseGermanFixtureDate(b.date)?.getTime() ?? 0;
+
+  return aDate - bDate;
+}
+
+function topMatchReason(item: any) {
+  if (item.classification.priority === 2) {
+    return `${item.classification.reason} Bei ungeschlagenen Duellen werden Teams mit weniger verlorenen Sätzen höher priorisiert. Gemeinsame Satzverluste bisher: ${undefeatedSetLosses(item)}.`;
+  }
+
+  return item.classification.reason;
+}
+
+
 export default async function DuellePage() {
   const data = await loadData();
   const today = new Date();
@@ -259,16 +342,7 @@ export default async function DuellePage() {
 
   const topMatches = candidates
     .filter((item) => isFixtureInCurrentMonth(item.date, today))
-    .sort((a, b) => {
-      if (a.classification.priority !== b.classification.priority) {
-        return a.classification.priority - b.classification.priority;
-      }
-
-      const aDate = parseGermanFixtureDate(a.date)?.getTime() ?? 0;
-      const bDate = parseGermanFixtureDate(b.date)?.getTime() ?? 0;
-
-      return aDate - bDate;
-    })
+    .sort(compareTopMatches)
     .slice(0, 10);
 
   const topTableCount = topMatches.filter((item) => item.classification.priority === 1).length;
@@ -290,9 +364,7 @@ export default async function DuellePage() {
           <div className="badge">TNB Top 10 Begegnungen</div>
           <h1 className="title">Die wichtigsten Begegnungen im {monthLabel(today)}</h1>
           <p className="subtitle">
-            Diese Seite zeigt maximal zehn anstehende Begegnungen im TNB Herrenbereich für den aktuellen Monat.
-            Priorisiert werden zuerst Spiele zwischen zwei ungeschlagenen Mannschaften, danach Rang 1 gegen Rang 2,
-            danach Letzter gegen Vorletzter.
+            Diese Seite zeigt maximal zehn anstehende Begegnungen im TNB Herrenbereich für den aktuellen Monat. Priorisiert werden zuerst direkte Spitzenspiele zwischen Rang 1 und Rang 2, danach Begegnungen zwischen zwei ungeschlagenen Mannschaften, danach Rang 1 gegen Rang 3 und ergänzend direkte Kellerduelle.
           </p>
         </div>
 
@@ -310,20 +382,18 @@ export default async function DuellePage() {
 
       <section className="metrics">
         <div className="card">
-          <div className="metricLabel">Top Begegnungen</div>
-          <div className="metricValue">{topMatches.length}</div>
-        </div>
-        <div className="card">
-          <div className="metricLabel">Ungeschlagen Duelle</div>
-          <div className="metricValue">{visibleUndefeatedCount}</div>
-        </div>
-        <div className="card">
           <div className="metricLabel">Rang 1 gegen 2</div>
-          <div className="metricValue">{visibleRankOneVsTwoCount}</div>
+          <div className="metricValue">{topTableCount}</div>
         </div>
+
+        <div className="card">
+          <div className="metricLabel">Ungeschlagene Duelle</div>
+          <div className="metricValue">{undefeatedCount}</div>
+        </div>
+
         <div className="card">
           <div className="metricLabel">Kellerduelle</div>
-          <div className="metricValue">{visibleBottomTableCount}</div>
+          <div className="metricValue">{bottomTableCount}</div>
         </div>
       </section>
 
@@ -365,7 +435,7 @@ export default async function DuellePage() {
                     <span className="badge">{item.classification.label}</span>
                   </div>
                   <div style={{ marginTop: 8, color: "#66746c", fontSize: 14 }}>
-                    {item.classification.reason}
+                    {topMatchReason(item)}
                   </div>
                 </div>
 
