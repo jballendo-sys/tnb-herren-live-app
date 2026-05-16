@@ -371,16 +371,6 @@ export default async function AnalysenPage({
     })
     .slice(0, 10);
 
-  const closeMatchTeams = filteredTeamRows
-    .filter((row) => row.played > 0)
-    .filter((row) => row.closeFixtureCount > 0)
-    .sort((a, b) => {
-      if (b.closeFixtureCount !== a.closeFixtureCount) return b.closeFixtureCount - a.closeFixtureCount;
-      if (b.played !== a.played) return b.played - a.played;
-      return a.rank - b.rank;
-    })
-    .slice(0, 10);
-
   const teamsUnderPressure = filteredTeamRows
     .filter((row) => row.played > 0)
     .filter((row) => row.losses > 0 || row.matchLossRate >= 50)
@@ -401,7 +391,7 @@ export default async function AnalysenPage({
           <div className="badge">Analyse Center</div>
           <h1 className="title">TNB Analyse Center</h1>
           <p className="subtitle">
-            Diese Seite zeigt auffällige Entwicklungen im TNB Herrenbereich: souveräne Teams, enge Tabellenlagen, knappe Punktspiele und Teams unter Ergebnisdruck.
+            Diese Seite zeigt auffällige Entwicklungen im TNB Herrenbereich: souveräne Teams, enge Tabellenlagen und Teams unter Ergebnisdruck.
           </p>
         </div>
 
@@ -430,10 +420,6 @@ export default async function AnalysenPage({
           <div className="metricLabel">Enge Tabellenlagen</div>
           <div className="metricValue">{tightTables.length}</div>
         </div>
-        <div className="card">
-          <div className="metricLabel">Knappe Punktspiele</div>
-          <div className="metricValue">{closeMatchTeams.length}</div>
-        </div>
       </section>
 
       <AgeFilter activeAge={activeAge} ageClasses={ageClasses} />
@@ -448,17 +434,7 @@ export default async function AnalysenPage({
       />
 
       <GroupInsightList rows={tightTables} />
-
-      <TeamInsightList
-        title="Knappe Punktspiele"
-        subtitle="Teams, die besonders häufig enge Begegnungen hatten. Als knapp zählen Punktspiele mit maximal einem Match Unterschied, zum Beispiel 5:4, 4:5 oder 3:3."
-        rows={closeMatchTeams}
-        valueLabel="Knappe Spiele"
-        value={(row) => String(row.closeFixtureCount)}
-        detail={(row) => row.recentCloseResults.length ? row.recentCloseResults.join(" · ") : `${row.matchPointsRaw} Matches · ${row.played} Punktspiele`}
-      />
-
-      <TeamInsightList
+<TeamInsightList
         title="Teams unter Ergebnisdruck"
         subtitle="Teams, deren bisherige Ergebnisse bereits deutlich belastet sind. Im Unterschied zu Satzstatistiken geht es hier um verlorene Matches, verlorene Punktspiele und Tabellenlage."
         rows={teamsUnderPressure}
