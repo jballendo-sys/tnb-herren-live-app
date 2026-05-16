@@ -280,6 +280,33 @@ function topMatchReason(item: any) {
 }
 
 
+
+function topMatchUniqueKey(item: any) {
+  return [
+    item.groupId || item.group,
+    item.date,
+    item.time || "",
+    String(item.homeTeam || "").toLowerCase().replace(/\s+/g, " ").trim(),
+    String(item.awayTeam || "").toLowerCase().replace(/\s+/g, " ").trim()
+  ].join("|");
+}
+
+function uniqueTopMatches(items: any[]) {
+  const seen = new Set();
+
+  return items.filter((item) => {
+    const key = topMatchUniqueKey(item);
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
+
 export default async function DuellePage() {
   const data = await loadData();
   const today = new Date();
@@ -340,15 +367,18 @@ export default async function DuellePage() {
     }
   }
 
-  const topMatches = candidates
-    .filter((item) => isFixtureInCurrentMonth(item.date, today))
+  const currentMonthCandidates = uniqueTopMatches(
+    candidates.filter((item) => isFixtureInCurrentMonth(item.date, today))
+  );
+
+  const topMatches = currentMonthCandidates
     .sort(compareTopMatches)
     .slice(0, 10);
 
-  const topTableCount = topMatches.filter((item) => item.classification.priority === 1).length;
-  const undefeatedCount = topMatches.filter((item) => item.classification.priority === 2).length;
-  const rankOneVsThreeCount = topMatches.filter((item) => item.classification.priority === 3).length;
-  const bottomTableCount = topMatches.filter((item) => item.classification.priority === 4).length;
+  const topTableCount = currentMonthCandidates.filter((item) => item.classification.priority === 1).length;
+  const undefeatedCount = currentMonthCandidates.filter((item) => item.classification.priority === 2).length;
+  const rankOneVsThreeCount = currentMonthCandidates.filter((item) => item.classification.priority === 3).length;
+  const bottomTableCount = currentMonthCandidates.filter((item) => item.classification.priority === 4).length;
   const visibleRankOneVsTwoCount = topMatches.filter((item) => item.classification.priority === 1).length;
   const visibleUndefeatedCount = topMatches.filter((item) => item.classification.priority === 2).length;
   const visibleRankOneVsThreeCount = topMatches.filter((item) => item.classification.priority === 3).length;
@@ -364,7 +394,7 @@ export default async function DuellePage() {
           <div className="badge">TNB Top 10 Begegnungen</div>
           <h1 className="title">Die wichtigsten Begegnungen im {monthLabel(today)}</h1>
           <p className="subtitle">
-            Diese Seite zeigt maximal zehn anstehende Begegnungen im TNB Herrenbereich für den aktuellen Monat. Priorisiert werden zuerst direkte Spitzenspiele zwischen Rang 1 und Rang 2, danach Begegnungen zwischen zwei ungeschlagenen Mannschaften, danach Rang 1 gegen Rang 3 und ergänzend direkte Kellerduelle.
+            Diese Seite zeigt die zehn wichtigsten anstehenden Begegnungen im TNB Herrenbereich für den aktuellen Monat. Die Kacheln zählen alle eindeutigen Begegnungen des Monats je Kategorie. Die Liste darunter zeigt daraus die zehn höchst priorisierten Begegnungen.
           </p>
         </div>
 
