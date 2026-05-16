@@ -386,7 +386,7 @@ function GroupInsightList({ rows }: { rows: any[] }) {
     <section className="card" style={{ padding: 28, marginTop: 24 }}>
       <h2 style={{ marginTop: 0 }}>Enge Tabellenlagen</h2>
       <p className="subtitle" style={{ marginTop: 0 }}>
-        Gruppen, in denen Rang 1 bis Rang 3 nah beieinanderliegen. Die Kennzahl zeigt den Abstand in Mannschaftspunkten zwischen Rang 1 und Rang 3. Je kleiner der Abstand, desto enger ist das Rennen an der Spitze.
+        Angezeigt werden die Top 10 nach Spannungs Score. Der Score kombiniert den Punkteabstand zwischen Rang 1 und Rang 3, den Matchabstand, bereits gespielte Begegnungen und noch ausstehende Begegnungen. Je höher der Wert, desto relevanter ist die Tabellenlage an der Spitze.
       </p>
 
       {rows.length === 0 ? (
@@ -415,7 +415,7 @@ function GroupInsightList({ rows }: { rows: any[] }) {
                   Rang 1: {row.top1.team} · Rang 2: {row.top2.team} · Rang 3: {row.top3.team}
                 </div>
                 <div style={{ color: "#66746c", fontSize: 14, marginTop: 6 }}>
-                  Noch {row.openFixtures} enge Begegnungen
+                  {row.completedFixtures} gespielt · {row.openFixtures} ausstehend · Abstand Rang 1 zu 3: {row.gapPoints} Punkte
                 </div>
                 <div style={{ marginTop: 6 }}>
                   <a href={row.groupUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, fontWeight: 800 }}>
@@ -426,7 +426,7 @@ function GroupInsightList({ rows }: { rows: any[] }) {
 
               <div style={{ textAlign: "right" }}>
                 <div className="metricLabel">Spannungs Score</div>
-                <div style={{ fontSize: 24, fontWeight: 900 }}>{formatScore(row.tensionScore ?? calculateTensionScore(row))}</div>
+                <div style={{ fontSize: 24, fontWeight: 900 }}>{formatScore(row.displayScore ?? calculateTensionScore(row))}</div>
               </div>
             </article>
           ))}
@@ -462,31 +462,34 @@ export default async function AnalysenPage({
   const sovereignTeams = filteredTeamRows
     .filter((row) => row.played > 0)
     .filter((row) => row.matchPoints.total > 0)
+    .map((row) => ({ ...row, displayScore: calculateSovereigntyScore(row) }))
     .sort((a, b) => {
-      if (b.matchWinRate !== a.matchWinRate) return b.matchWinRate - a.matchWinRate;
+      if (b.displayScore !== a.displayScore) return b.displayScore - a.displayScore;
       if (b.played !== a.played) return b.played - a.played;
-      if (b.setWinRate !== a.setWinRate) return b.setWinRate - a.setWinRate;
       return a.rank - b.rank;
     })
     .slice(0, 10);
 
   const tightTables = filteredGroupRows
     .filter((row) => row.completedFixtures > 0)
+    .map((row) => ({ ...row, displayScore: calculateTensionScore(row) }))
     .sort((a, b) => {
-      if (a.gapTop1ToTop3 !== b.gapTop1ToTop3) return a.gapTop1ToTop3 - b.gapTop1ToTop3;
-      if (b.openFixtures !== a.openFixtures) return b.openFixtures - a.openFixtures;
-      return 0;
+      if (b.displayScore !== a.displayScore) return b.displayScore - a.displayScore;
+      const aGap = a.gapPoints ?? a.gapTop1ToTop3 ?? 999;
+      const bGap = b.gapPoints ?? b.gapTop1ToTop3 ?? 999;
+      if (aGap !== bGap) return aGap - bGap;
+      return b.openFixtures - a.openFixtures;
     })
     .slice(0, 10);
 
   const teamsUnderPressure = filteredTeamRows
     .filter((row) => row.played > 0)
     .filter((row) => row.losses > 0 || row.matchLossRate >= 50)
+    .map((row) => ({ ...row, displayScore: calculatePressureScore(row) }))
     .sort((a, b) => {
+      if (b.displayScore !== a.displayScore) return b.displayScore - a.displayScore;
       if (b.losses !== a.losses) return b.losses - a.losses;
-      if (b.matchLossRate !== a.matchLossRate) return b.matchLossRate - a.matchLossRate;
-      if (b.matchPoints.lost !== a.matchPoints.lost) return b.matchPoints.lost - a.matchPoints.lost;
-      return b.rank - a.rank;
+      return b.matchPoints.lost - a.matchPoints.lost;
     })
     .slice(0, 10);
 
@@ -536,21 +539,21 @@ export default async function AnalysenPage({
 
       <TeamInsightList
         title="Souveräne Teams"
-        subtitle="Teams mit besonders hoher Matchquote. Die Matchquote zeigt den Anteil gewonnener Einzel und Doppel an allen bisher gespielten Matches."
+        subtitle={`${sovereignTeams.length} Teams erfüllen aktuell die Kriterien. Angezeigt werden die Top 10 nach Souveränitäts Score. Der Score kombiniert Matchquote, Satzquote, Anzahl gespielter Punktspiele und Tabellenrang. Dadurch werden Teams bevorzugt, die nicht nur gewinnen, sondern dies auch klar und über mehrere Begegnungen bestätigen.`}
         rows={sovereignTeams}
         valueLabel="Souveränitäts Score"
-        value={(row) => formatScore(row.sovereigntyScore ?? calculateSovereigntyScore(row))}
-        detail={(row) => `${row.matchPointsRaw} Matches · ${row.tablePointsRaw} Mannschaftspunkte · ${row.played} Punktspiel${Number(row.played) === 1 ? "" : "e"}`}
+        value={(row) => formatScore(row.displayScore ?? calculateSovereigntyScore(row))}
+        detail={(row) => `Score ${formatScore(row.displayScore ?? calculateSovereigntyScore(row))} · Satzquote ${formatPercent(row.setWinRate)} · ${row.matchPointsRaw} Matches · Rang ${row.rank}`}
       />
 
       <GroupInsightList rows={tightTables} />
 <TeamInsightList
         title="Teams unter Ergebnisdruck"
-        subtitle="Teams, deren bisherige Ergebnisse bereits deutlich belastet sind. Im Unterschied zu Satzstatistiken geht es hier um verlorene Matches, verlorene Punktspiele und Tabellenlage."
+        subtitle="Angezeigt werden die Top 10 nach Ergebnisdruck Score. Der Score kombiniert Matchverlustquote, Satzverlustquote, verlorene Punktspiele, verlorene Matches und Tabellenrang. Je höher der Wert, desto stärker ist die bisherige Ergebnisschwäche."
         rows={teamsUnderPressure}
         valueLabel="Ergebnisdruck Score"
-        value={(row) => formatScore(row.pressureScore ?? calculatePressureScore(row))}
-        detail={(row) => `${row.matchPointsRaw} Matches · ${row.tablePointsRaw} Mannschaftspunkte · ${row.losses} verlorene Punktspiel${Number(row.losses) === 1 ? "" : "e"}`}
+        value={(row) => formatScore(row.displayScore ?? calculatePressureScore(row))}
+        detail={(row) => `Score ${formatScore(row.displayScore ?? calculatePressureScore(row))} · ${row.matchPointsRaw} Matches · ${row.tablePointsRaw} Mannschaftspunkte · ${row.losses} verlorene Punktspiele`}
       />
     </main>
   );
