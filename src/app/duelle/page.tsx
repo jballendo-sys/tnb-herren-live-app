@@ -161,25 +161,27 @@ function classifyTopMatch(item: any) {
     ((homeRank === lastRank && awayRank === lastRank - 1) ||
       (awayRank === lastRank && homeRank === lastRank - 1));
 
-  if (bothUndefeated) {
+  if (oneVsTwo) {
     return {
-      priority: 2, label: "Ungeschlagen gegen ungeschlagen",
-      reason: "Beide Mannschaften sind in dieser Gruppe noch ungeschlagen."
+      priority: 1,
+      label: "Rang 1 gegen Rang 2",
+      reason: "Spitzenspiel Rang 1 gegen Rang 2 zwischen den beiden bestplatzierten Mannschaften."
     };
   }
 
-  if (oneVsTwo) {
+  if (bothUndefeated) {
     return {
-      priority: 1, label: "Rang 1 gegen Rang 2",
-      reason: "Spitzenspiel Rang 1 gegen Rang 2 zwischen den beiden bestplatzierten Mannschaften."
+      priority: 2,
+      label: "Ungeschlagen gegen ungeschlagen",
+      reason: "Beide Mannschaften haben mindestens ein Punktspiel gespielt und noch kein Punktspiel verloren."
     };
   }
 
   if (lastVsPenultimate) {
     return {
-      priority: 3,
-      label: "Letzter gegen Vorletzter",
-      reason: "Direktes Duell im unteren Tabellenbereich."
+      priority: 4,
+      label: "Kellerduell",
+      reason: "Direktes Duell zwischen dem letzten und vorletzten Team der Gruppe."
     };
   }
 
@@ -307,7 +309,11 @@ function uniqueTopMatches(items: any[]) {
 }
 
 
-export default async function DuellePage() {
+export default async function DuellePage({
+  searchParams
+}: {
+  searchParams?: { altersklasse?: string };
+}) {
   const data = await loadData();
   const today = new Date();
   const currentMonth = today.getMonth();
@@ -367,9 +373,24 @@ export default async function DuellePage() {
     }
   }
 
-  const currentMonthCandidates = uniqueTopMatches(
+  const allCurrentMonthCandidates = uniqueTopMatches(
     candidates.filter((item) => isFixtureInCurrentMonth(item.date, today))
   );
+
+  const ageClasses = Array.from(
+    new Set(allCurrentMonthCandidates.map((item) => item.ageClass).filter(Boolean))
+  ).sort((a, b) => {
+    const aNumber = Number(String(a).replace(/\D/g, "")) || 0;
+    const bNumber = Number(String(b).replace(/\D/g, "")) || 0;
+    return aNumber - bNumber;
+  });
+
+  const activeAgeClass = searchParams?.altersklasse || "alle";
+
+  const currentMonthCandidates =
+    activeAgeClass === "alle"
+      ? allCurrentMonthCandidates
+      : allCurrentMonthCandidates.filter((item) => item.ageClass === activeAgeClass);
 
   const topMatches = currentMonthCandidates
     .sort(compareTopMatches)
@@ -379,10 +400,10 @@ export default async function DuellePage() {
   const undefeatedCount = currentMonthCandidates.filter((item) => item.classification.priority === 2).length;
   const rankOneVsThreeCount = currentMonthCandidates.filter((item) => item.classification.priority === 3).length;
   const bottomTableCount = currentMonthCandidates.filter((item) => item.classification.priority === 4).length;
-  const visibleRankOneVsTwoCount = topMatches.filter((item) => item.classification.priority === 1).length;
-  const visibleUndefeatedCount = topMatches.filter((item) => item.classification.priority === 2).length;
-  const visibleRankOneVsThreeCount = topMatches.filter((item) => item.classification.priority === 3).length;
-  const visibleBottomTableCount = topMatches.filter((item) => item.classification.priority === 4).length;
+  const visibleRankOneVsTwoCount = topTableCount;
+  const visibleUndefeatedCount = undefeatedCount;
+  const visibleRankOneVsThreeCount = rankOneVsThreeCount;
+  const visibleBottomTableCount = bottomTableCount;
 
 
 
@@ -407,6 +428,44 @@ export default async function DuellePage() {
             <a href="/" style={{ fontWeight: 900 }}>Zurück zur App</a>
             <a href="/radar" style={{ fontWeight: 900 }}>Spieltagsradar</a>
           </div>
+        </div>
+      </section>
+
+      <section className="card" style={{ padding: 20, marginTop: 24 }}>
+        <h2 style={{ marginTop: 0 }}>Top Begegnungen nach Altersklasse filtern</h2>
+        <p className="subtitle" style={{ marginTop: 0 }}>
+          Die Auswahl grenzt Kacheln und Top 10 auf die jeweilige Altersklasse ein.
+        </p>
+
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
+          <a
+            className="badge"
+            href="/duelle"
+            style={{
+              textDecoration: "none",
+              fontWeight: 900,
+              background: activeAgeClass === "alle" ? "#245638" : undefined,
+              color: activeAgeClass === "alle" ? "#ffffff" : undefined
+            }}
+          >
+            Alle Altersklassen
+          </a>
+
+          {ageClasses.map((ageClass) => (
+            <a
+              key={ageClass}
+              className="badge"
+              href={`/duelle?altersklasse=${encodeURIComponent(ageClass)}`}
+              style={{
+                textDecoration: "none",
+                fontWeight: 900,
+                background: activeAgeClass === ageClass ? "#245638" : undefined,
+                color: activeAgeClass === ageClass ? "#ffffff" : undefined
+              }}
+            >
+              {ageClass}
+            </a>
+          ))}
         </div>
       </section>
 
