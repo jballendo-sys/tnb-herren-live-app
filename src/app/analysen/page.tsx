@@ -26,6 +26,67 @@ function formatPercent(value: number) {
   return `${Math.round(value)}%`;
 }
 
+function formatScore(value: number) {
+  return Number(value || 0).toFixed(1);
+}
+
+function scoreNumber(value: unknown, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function scorePercent(record: { won: number; lost: number; total: number }) {
+  return record.total > 0 ? (record.won / record.total) * 100 : 0;
+}
+
+function calculateSovereigntyScore(row: any) {
+  const played = scoreNumber(row.played);
+  const rank = scoreNumber(row.rank, 999);
+  const matchPoints = row.matchPoints || splitRecord(row.matchPointsRaw);
+  const sets = row.sets || splitRecord(row.setsRaw);
+
+  const matchWinRate = scorePercent(matchPoints);
+  const setWinRate = scorePercent(sets);
+  const playedScore = Math.min(played, 4) * 5;
+  const rankBonus = rank === 1 ? 10 : rank === 2 ? 5 : 0;
+
+  return matchWinRate * 0.5 + setWinRate * 0.25 + playedScore + rankBonus;
+}
+
+function calculatePressureScore(row: any) {
+  const played = scoreNumber(row.played);
+  const losses = scoreNumber(row.losses);
+  const rank = scoreNumber(row.rank, 999);
+  const matchPoints = row.matchPoints || splitRecord(row.matchPointsRaw);
+  const sets = row.sets || splitRecord(row.setsRaw);
+
+  const matchLossRate = matchPoints.total > 0 ? (matchPoints.lost / matchPoints.total) * 100 : 0;
+  const setLossRate = sets.total > 0 ? (sets.lost / sets.total) * 100 : 0;
+
+  return (
+    matchLossRate * 0.45 +
+    setLossRate * 0.15 +
+    Math.min(played, 4) * 6 +
+    losses * 8 +
+    matchPoints.lost * 0.8 +
+    (rank >= 4 && rank < 999 ? 8 : 0)
+  );
+}
+
+function calculateTensionScore(row: any) {
+  const gapPoints = scoreNumber(row.gapPoints ?? row.gapTop1ToTop3);
+  const gapMatches = scoreNumber(row.gapMatches);
+  const openFixtures = scoreNumber(row.openFixtures);
+  const completedFixtures = scoreNumber(row.completedFixtures);
+
+  return (
+    Math.max(0, 40 - gapPoints * 12) +
+    Math.max(0, 25 - gapMatches * 2) +
+    Math.min(openFixtures, 6) * 4 +
+    Math.min(completedFixtures, 6) * 3
+  );
+}
+
 function ageSortValue(ageClass: string) {
   if (ageClass === "Herren") return 0;
   const value = Number(ageClass.replace(/\D/g, ""));
@@ -206,6 +267,53 @@ function AgeFilter({ activeAge, ageClasses }: { activeAge: string; ageClasses: s
   );
 }
 
+function ScoreExplanation() {
+  return (
+    <section className="card" style={{ padding: 28, marginTop: 24 }}>
+      <h2 style={{ marginTop: 0 }}>Wie werden die Scores berechnet?</h2>
+      <p className="subtitle" style={{ marginTop: 0 }}>
+        Die Top 10 werden nicht nach einem einzelnen Wert gebildet. Jeder Bereich nutzt einen kombinierten Score. Je höher der Score, desto auffälliger ist das Team oder die Gruppe in diesem Analysebereich.
+      </p>
+
+      <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", marginTop: 18 }}>
+        <div style={{ border: "1px solid #dfe9e2", borderRadius: 18, padding: 18, background: "#ffffff" }}>
+          <h3 style={{ marginTop: 0 }}>Souveränitäts Score</h3>
+          <p className="subtitle" style={{ marginTop: 0 }}>
+            Bewertet Teams, die nicht nur gewinnen, sondern dies möglichst klar und über mehrere Begegnungen tun.
+          </p>
+          <p style={{ marginBottom: 0, color: "#66746c" }}>
+            Matchquote zählt am stärksten. Zusätzlich fließen Satzquote, Anzahl gespielter Punktspiele und ein Bonus für Rang 1 oder Rang 2 ein.
+          </p>
+        </div>
+
+        <div style={{ border: "1px solid #dfe9e2", borderRadius: 18, padding: 18, background: "#ffffff" }}>
+          <h3 style={{ marginTop: 0 }}>Spannungs Score</h3>
+          <p className="subtitle" style={{ marginTop: 0 }}>
+            Bewertet Gruppen, in denen die Tabellenspitze besonders eng ist.
+          </p>
+          <p style={{ marginBottom: 0, color: "#66746c" }}>
+            Entscheidend sind der Punkteabstand zwischen Rang 1 und Rang 3, der Matchabstand der Spitzenteams, bereits gespielte Begegnungen und noch ausstehende Begegnungen.
+          </p>
+        </div>
+
+        <div style={{ border: "1px solid #dfe9e2", borderRadius: 18, padding: 18, background: "#ffffff" }}>
+          <h3 style={{ marginTop: 0 }}>Ergebnisdruck Score</h3>
+          <p className="subtitle" style={{ marginTop: 0 }}>
+            Bewertet Teams, deren bisherige Ergebnisse besonders belastet sind.
+          </p>
+          <p style={{ marginBottom: 0, color: "#66746c" }}>
+            Berücksichtigt werden Matchverlustquote, Satzverlustquote, verlorene Punktspiele, Anzahl gespielter Punktspiele, verlorene Matches und eine schwache Tabellenposition.
+          </p>
+        </div>
+      </div>
+
+      <p className="subtitle" style={{ marginTop: 18, marginBottom: 0 }}>
+        Die Scores sind bewusst als Vergleichswerte gedacht. Sie ersetzen nicht die offizielle Tabelle, helfen aber dabei, aus vielen Mannschaften und Gruppen die auffälligsten Fälle schneller zu erkennen.
+      </p>
+    </section>
+  );
+}
+
 function TeamInsightList({
   title,
   subtitle,
@@ -317,8 +425,8 @@ function GroupInsightList({ rows }: { rows: any[] }) {
               </div>
 
               <div style={{ textAlign: "right" }}>
-                <div className="metricLabel">Abstand Rang 1 zu Rang 3</div>
-                <div style={{ fontSize: 24, fontWeight: 900 }}>{row.gapTop1ToTop3}</div>
+                <div className="metricLabel">Spannungs Score</div>
+                <div style={{ fontSize: 24, fontWeight: 900 }}>{formatScore(row.tensionScore ?? calculateTensionScore(row))}</div>
               </div>
             </article>
           ))}
@@ -424,12 +532,14 @@ export default async function AnalysenPage({
 
       <AgeFilter activeAge={activeAge} ageClasses={ageClasses} />
 
+      <ScoreExplanation />
+
       <TeamInsightList
         title="Souveräne Teams"
         subtitle="Teams mit besonders hoher Matchquote. Die Matchquote zeigt den Anteil gewonnener Einzel und Doppel an allen bisher gespielten Matches."
         rows={sovereignTeams}
-        valueLabel="Matchquote"
-        value={(row) => formatPercent(row.matchWinRate)}
+        valueLabel="Souveränitäts Score"
+        value={(row) => formatScore(row.sovereigntyScore ?? calculateSovereigntyScore(row))}
         detail={(row) => `${row.matchPointsRaw} Matches · ${row.tablePointsRaw} Mannschaftspunkte · ${row.played} Punktspiel${Number(row.played) === 1 ? "" : "e"}`}
       />
 
@@ -438,8 +548,8 @@ export default async function AnalysenPage({
         title="Teams unter Ergebnisdruck"
         subtitle="Teams, deren bisherige Ergebnisse bereits deutlich belastet sind. Im Unterschied zu Satzstatistiken geht es hier um verlorene Matches, verlorene Punktspiele und Tabellenlage."
         rows={teamsUnderPressure}
-        valueLabel="Verlorene Matches"
-        value={(row) => formatPercent(row.matchLossRate)}
+        valueLabel="Ergebnisdruck Score"
+        value={(row) => formatScore(row.pressureScore ?? calculatePressureScore(row))}
         detail={(row) => `${row.matchPointsRaw} Matches · ${row.tablePointsRaw} Mannschaftspunkte · ${row.losses} verlorene Punktspiel${Number(row.losses) === 1 ? "" : "e"}`}
       />
     </main>
