@@ -1,5 +1,5 @@
-import { MainNav } from "@/components/MainNav";
-﻿import { loadData } from "@/lib/storage";
+﻿import { MainNav } from "@/components/MainNav";
+import { loadData } from "@/lib/storage";
 
 type SearchParams = {
   age?: string;
@@ -15,8 +15,15 @@ function splitRecord(value: string | null | undefined) {
   return { won, lost, total: won + lost };
 }
 
-function formatNumber(value: number) {
-  return String(value).replace(".", ",");
+function normalize(value: string | null | undefined) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function formatPercent(value: number) {
+  return `${Math.round(value)}%`;
 }
 
 function ageSortValue(ageClass: string) {
@@ -34,51 +41,83 @@ function leagueWithGroup(league: string | null | undefined, group: string | null
   return `${cleanLeague} (${cleanGroup})`;
 }
 
+function resultOf(fixture: any) {
+  return fixture.matchPoints || fixture.score || fixture.result || "";
+}
+
+function isCompleted(fixture: any) {
+  return normalize(fixture.status) === "completed";
+}
+
+function isTeamFixture(fixture: any, teamName: string) {
+  const home = normalize(fixture.homeTeam || fixture.home);
+  const away = normalize(fixture.awayTeam || fixture.away);
+  const name = normalize(teamName);
+
+  return home === name || away === name;
+}
+
+function isCloseResult(result: string) {
+  const record = splitRecord(result);
+
+  if (record.total === 0) return false;
+
+  return Math.abs(record.won - record.lost) <= 1;
+}
+
 function makeTeamRows(data: any) {
   const seen = new Set<string>();
   const rows: any[] = [];
 
-  for (const team of data.teams || []) {
-    for (const standing of team.standings || []) {
-      const key = `${team.groupId}|${standing.team}`;
+  for (const groupTeam of data.teams || []) {
+    for (const standing of groupTeam.standings || []) {
+      const key = `${groupTeam.groupId}|${standing.team}`;
       if (seen.has(key)) continue;
       seen.add(key);
 
       const tablePoints = splitRecord(standing.tablePoints);
       const matchPoints = splitRecord(standing.matchPoints);
       const sets = splitRecord(standing.sets);
-      const games = splitRecord(standing.games);
       const played = Number(standing.played ?? 0);
-      const rank = Number(standing.rank ?? 999);
       const wins = Number(standing.wins ?? 0);
       const losses = Number(standing.losses ?? 0);
+      const rank = Number(standing.rank ?? 999);
 
-      const setLossesPerPointspiel = played > 0 ? Number((sets.lost / played).toFixed(1)) : 0;
-      const matchLossRate = matchPoints.total > 0 ? Math.round((matchPoints.lost / matchPoints.total) * 100) : 0;
-      const setLossRate = sets.total > 0 ? Math.round((sets.lost / sets.total) * 100) : 0;
+      const fixtures = (groupTeam.fixtures || [])
+        .filter((fixture: any) => isTeamFixture(fixture, standing.team))
+        .filter(isCompleted);
+
+      const closeFixtures = fixtures.filter((fixture: any) => isCloseResult(resultOf(fixture)));
+      const recentCloseResults = closeFixtures
+        .slice(0, 3)
+        .map((fixture: any) => `${fixture.date}: ${fixture.homeTeam || fixture.home} ${resultOf(fixture)} ${fixture.awayTeam || fixture.away}`);
+
+      const matchWinRate = matchPoints.total > 0 ? (matchPoints.won / matchPoints.total) * 100 : 0;
+      const matchLossRate = matchPoints.total > 0 ? (matchPoints.lost / matchPoints.total) * 100 : 0;
+      const setWinRate = sets.total > 0 ? (sets.won / sets.total) * 100 : 0;
 
       rows.push({
         team: standing.team,
+        ageClass: groupTeam.ageClass,
+        league: groupTeam.league,
+        group: groupTeam.group,
+        groupId: groupTeam.groupId,
+        groupUrl: groupTeam.groupUrl,
         rank,
         played,
         wins,
         losses,
-        tablePointsRaw: standing.tablePoints,
-        matchPointsRaw: standing.matchPoints,
-        setsRaw: standing.sets,
-        gamesRaw: standing.games,
+        tablePointsRaw: standing.tablePoints || "0:0",
+        matchPointsRaw: standing.matchPoints || "0:0",
+        setsRaw: standing.sets || "0:0",
         tablePoints,
         matchPoints,
         sets,
-        games,
-        setLossesPerPointspiel,
+        matchWinRate,
         matchLossRate,
-        setLossRate,
-        ageClass: team.ageClass,
-        league: team.league,
-        group: team.group,
-        groupId: team.groupId,
-        groupUrl: team.groupUrl
+        setWinRate,
+        closeFixtureCount: closeFixtures.length,
+        recentCloseResults
       });
     }
   }
@@ -90,19 +129,17 @@ function makeGroupRows(data: any) {
   const seen = new Set<string>();
   const groups: any[] = [];
 
-  for (const team of data.teams || []) {
-    if (seen.has(team.groupId)) continue;
-    seen.add(team.groupId);
+  for (const groupTeam of data.teams || []) {
+    if (seen.has(groupTeam.groupId)) continue;
+    seen.add(groupTeam.groupId);
 
-    const standings = (team.standings || [])
+    const standings = (groupTeam.standings || [])
       .map((row: any) => ({
         ...row,
         rank: Number(row.rank ?? 999),
-        tablePoints: splitRecord(row.tablePoints),
-        matchPoints: splitRecord(row.matchPoints),
-        sets: splitRecord(row.sets),
-        played: Number(row.played ?? 0)
+        tablePoints: splitRecord(row.tablePoints)
       }))
+      .filter((row: any) => Number.isFinite(row.rank) && row.rank > 0)
       .sort((a: any, b: any) => a.rank - b.rank);
 
     if (standings.length < 3) continue;
@@ -111,23 +148,19 @@ function makeGroupRows(data: any) {
     const top2 = standings[1];
     const top3 = standings[2];
 
-    const gapTop1ToTop3 = top1.tablePoints.won - top3.tablePoints.won;
-    const gapTop1ToTop2 = top1.tablePoints.won - top2.tablePoints.won;
-
-    const fixtures = team.fixtures || [];
-    const openFixtures = fixtures.filter((fixture: any) => fixture.status === "open").length;
-    const completedFixtures = fixtures.filter((fixture: any) => fixture.status === "completed").length;
+    const gapTop1ToTop3 = Math.max(0, top1.tablePoints.won - top3.tablePoints.won);
+    const openFixtures = (groupTeam.fixtures || []).filter((fixture: any) => fixture.status === "open").length;
+    const completedFixtures = (groupTeam.fixtures || []).filter((fixture: any) => fixture.status === "completed").length;
 
     groups.push({
-      ageClass: team.ageClass,
-      league: team.league,
-      group: team.group,
-      groupId: team.groupId,
-      groupUrl: team.groupUrl,
+      ageClass: groupTeam.ageClass,
+      league: groupTeam.league,
+      group: groupTeam.group,
+      groupId: groupTeam.groupId,
+      groupUrl: groupTeam.groupUrl,
       top1,
       top2,
       top3,
-      gapTop1ToTop2,
       gapTop1ToTop3,
       openFixtures,
       completedFixtures
@@ -173,20 +206,20 @@ function AgeFilter({ activeAge, ageClasses }: { activeAge: string; ageClasses: s
   );
 }
 
-function TeamTable({
+function TeamInsightList({
   title,
   subtitle,
   rows,
   valueLabel,
   value,
-  averageMetric = false
+  detail
 }: {
   title: string;
   subtitle: string;
   rows: any[];
   valueLabel: string;
-  value: (row: any) => number | string;
-  averageMetric?: boolean;
+  value: (row: any) => string;
+  detail: (row: any) => string;
 }) {
   return (
     <section className="card" style={{ padding: 28, marginTop: 24 }}>
@@ -196,100 +229,99 @@ function TeamTable({
       {rows.length === 0 ? (
         <p className="subtitle">Für diese Auswahl wurden keine passenden Mannschaften gefunden.</p>
       ) : (
-        <div className="tableWrap">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Mannschaft</th>
-                <th>Altersklasse</th>
-                <th>Liga</th>
-                <th>Mannschaftspunkte</th>
-                <th>Matches</th>
-                <th>{valueLabel}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, index) => (
-                <tr key={`${title}-${row.groupId}-${row.team}`}>
-                  <td><strong>{index + 1}</strong></td>
-                  <td>
-                    <strong>{row.team}</strong>
-                    <div style={{ marginTop: 4 }}>
-                      <a href={row.groupUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, fontWeight: 800 }}>
-                        nuLiga öffnen
-                      </a>
-                    </div>
-                  </td>
-                  <td>{row.ageClass}</td>
-                  <td>{leagueWithGroup(row.league, row.group)}</td>
-                  <td><strong>{row.tablePointsRaw || "0:0"}</strong></td>
-                  <td><strong>{row.matchPointsRaw || "0:0"}</strong></td>
-                  <td>
-                    <strong>{typeof value(row) === "number" ? formatNumber(value(row) as number) : value(row)}</strong>
-                    {averageMetric ? (
-                      <div style={{ color: "#66746c", fontSize: 13 }}>
-                        {row.sets.lost} Satzverluste gesamt · {row.played} Punktspiel{Number(row.played) === 1 ? "" : "e"}
-                      </div>
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div style={{ display: "grid", gap: 12 }}>
+          {rows.map((row, index) => (
+            <article
+              key={`${title}-${row.groupId}-${row.team}`}
+              style={{
+                border: "1px solid #dfe9e2",
+                borderRadius: 18,
+                padding: 18,
+                background: "#ffffff",
+                display: "grid",
+                gridTemplateColumns: "56px 1fr auto",
+                gap: 16,
+                alignItems: "center"
+              }}
+            >
+              <div style={{ fontSize: 24, fontWeight: 900 }}>#{index + 1}</div>
+
+              <div>
+                <div style={{ fontWeight: 900 }}>{row.team}</div>
+                <div style={{ color: "#66746c", fontSize: 14, marginTop: 4 }}>
+                  {row.ageClass} · {leagueWithGroup(row.league, row.group)}
+                </div>
+                <div style={{ color: "#66746c", fontSize: 14, marginTop: 6 }}>
+                  {detail(row)}
+                </div>
+                <div style={{ marginTop: 6 }}>
+                  <a href={row.groupUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, fontWeight: 800 }}>
+                    nuLiga öffnen
+                  </a>
+                </div>
+              </div>
+
+              <div style={{ textAlign: "right" }}>
+                <div className="metricLabel">{valueLabel}</div>
+                <div style={{ fontSize: 24, fontWeight: 900 }}>{value(row)}</div>
+              </div>
+            </article>
+          ))}
         </div>
       )}
     </section>
   );
 }
 
-function GroupTable({ rows }: { rows: any[] }) {
+function GroupInsightList({ rows }: { rows: any[] }) {
   return (
     <section className="card" style={{ padding: 28, marginTop: 24 }}>
       <h2 style={{ marginTop: 0 }}>Enge Tabellenlagen</h2>
       <p className="subtitle" style={{ marginTop: 0 }}>
-        Diese Analyse zeigt Gruppen, in denen Platz 1 bis Platz 3 besonders nah beieinanderliegen. Je kleiner der Abstand, desto offener ist die Spitze der Gruppe.
+        Gruppen, in denen Rang 1 bis Rang 3 nah beieinanderliegen. Die Kennzahl zeigt den Abstand in Mannschaftspunkten zwischen Rang 1 und Rang 3. Je kleiner der Abstand, desto offener ist das Rennen an der Spitze.
       </p>
 
       {rows.length === 0 ? (
-        <p className="subtitle">Für diese Auswahl wurden keine engen Gruppen gefunden.</p>
+        <p className="subtitle">Für diese Auswahl wurden keine engen Tabellenlagen gefunden.</p>
       ) : (
-        <div className="tableWrap">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Altersklasse</th>
-                <th>Liga</th>
-                <th>Platz 1</th>
-                <th>Platz 2</th>
-                <th>Platz 3</th>
-                <th>Abstand Platz 1 zu 3</th>
-                <th>Offen</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, index) => (
-                <tr key={`${row.groupId}-${index}`}>
-                  <td><strong>{index + 1}</strong></td>
-                  <td>{row.ageClass}</td>
-                  <td>
-                    <strong>{leagueWithGroup(row.league, row.group)}</strong>
-                    <div style={{ marginTop: 4 }}>
-                      <a href={row.groupUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, fontWeight: 800 }}>
-                        nuLiga öffnen
-                      </a>
-                    </div>
-                  </td>
-                  <td>{row.top1.team}<br /><span style={{ color: "#66746c" }}>{row.top1.tablePoints.won}:{row.top1.tablePoints.lost}</span></td>
-                  <td>{row.top2.team}<br /><span style={{ color: "#66746c" }}>{row.top2.tablePoints.won}:{row.top2.tablePoints.lost}</span></td>
-                  <td>{row.top3.team}<br /><span style={{ color: "#66746c" }}>{row.top3.tablePoints.won}:{row.top3.tablePoints.lost}</span></td>
-                  <td><strong>{row.gapTop1ToTop3}</strong> Punkte</td>
-                  <td>{row.openFixtures}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div style={{ display: "grid", gap: 12 }}>
+          {rows.map((row, index) => (
+            <article
+              key={`${row.groupId}-${index}`}
+              style={{
+                border: "1px solid #dfe9e2",
+                borderRadius: 18,
+                padding: 18,
+                background: "#ffffff",
+                display: "grid",
+                gridTemplateColumns: "56px 1fr auto",
+                gap: 16,
+                alignItems: "center"
+              }}
+            >
+              <div style={{ fontSize: 24, fontWeight: 900 }}>#{index + 1}</div>
+
+              <div>
+                <div style={{ fontWeight: 900 }}>{row.ageClass} · {leagueWithGroup(row.league, row.group)}</div>
+                <div style={{ color: "#66746c", fontSize: 14, marginTop: 6 }}>
+                  Rang 1: {row.top1.team} · Rang 2: {row.top2.team} · Rang 3: {row.top3.team}
+                </div>
+                <div style={{ color: "#66746c", fontSize: 14, marginTop: 6 }}>
+                  Noch {row.openFixtures} offene Begegnungen
+                </div>
+                <div style={{ marginTop: 6 }}>
+                  <a href={row.groupUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, fontWeight: 800 }}>
+                    nuLiga öffnen
+                  </a>
+                </div>
+              </div>
+
+              <div style={{ textAlign: "right" }}>
+                <div className="metricLabel">Abstand Rang 1 zu 3</div>
+                <div style={{ fontSize: 24, fontWeight: 900 }}>{row.gapTop1ToTop3}</div>
+              </div>
+            </article>
+          ))}
         </div>
       )}
     </section>
@@ -319,55 +351,57 @@ export default async function AnalysenPage({
     ? allGroupRows
     : allGroupRows.filter((row) => row.ageClass === activeAge);
 
-  const dominantTeams = filteredTeamRows
+  const sovereignTeams = filteredTeamRows
     .filter((row) => row.played > 0)
-    .filter((row) => row.losses === 0)
-    .filter((row) => row.matchPoints.lost === 0)
+    .filter((row) => row.matchPoints.total > 0)
     .sort((a, b) => {
-      if (b.matchPoints.won !== a.matchPoints.won) return b.matchPoints.won - a.matchPoints.won;
+      if (b.matchWinRate !== a.matchWinRate) return b.matchWinRate - a.matchWinRate;
+      if (b.played !== a.played) return b.played - a.played;
+      if (b.setWinRate !== a.setWinRate) return b.setWinRate - a.setWinRate;
+      return a.rank - b.rank;
+    })
+    .slice(0, 10);
+
+  const tightTables = filteredGroupRows
+    .filter((row) => row.completedFixtures > 0)
+    .sort((a, b) => {
+      if (a.gapTop1ToTop3 !== b.gapTop1ToTop3) return a.gapTop1ToTop3 - b.gapTop1ToTop3;
+      if (b.openFixtures !== a.openFixtures) return b.openFixtures - a.openFixtures;
+      return 0;
+    })
+    .slice(0, 10);
+
+  const closeMatchTeams = filteredTeamRows
+    .filter((row) => row.played > 0)
+    .filter((row) => row.closeFixtureCount > 0)
+    .sort((a, b) => {
+      if (b.closeFixtureCount !== a.closeFixtureCount) return b.closeFixtureCount - a.closeFixtureCount;
       if (b.played !== a.played) return b.played - a.played;
       return a.rank - b.rank;
     })
     .slice(0, 10);
 
-  const setLossesPerPointspiel = filteredTeamRows
-    .filter((row) => row.played > 0)
-    .sort((a, b) => {
-      if (b.setLossesPerPointspiel !== a.setLossesPerPointspiel) return b.setLossesPerPointspiel - a.setLossesPerPointspiel;
-      if (b.sets.lost !== a.sets.lost) return b.sets.lost - a.sets.lost;
-      return b.played - a.played;
-    })
-    .slice(0, 10);
-
-  const tightestGroups = filteredGroupRows
-    .filter((row) => row.completedFixtures > 0)
-    .sort((a, b) => {
-      if (a.gapTop1ToTop3 !== b.gapTop1ToTop3) return a.gapTop1ToTop3 - b.gapTop1ToTop3;
-      if (b.openFixtures !== a.openFixtures) return b.openFixtures - a.openFixtures;
-      return a.gapTop1ToTop2 - b.gapTop1ToTop2;
-    })
-    .slice(0, 10);
-
   const teamsUnderPressure = filteredTeamRows
     .filter((row) => row.played > 0)
-    .filter((row) => row.losses > 0 || row.matchLossRate >= 55 || row.setLossRate >= 55)
+    .filter((row) => row.losses > 0 || row.matchLossRate >= 50)
     .sort((a, b) => {
+      if (b.losses !== a.losses) return b.losses - a.losses;
       if (b.matchLossRate !== a.matchLossRate) return b.matchLossRate - a.matchLossRate;
-      if (b.setLossRate !== a.setLossRate) return b.setLossRate - a.setLossRate;
-      if (b.setLossesPerPointspiel !== a.setLossesPerPointspiel) return b.setLossesPerPointspiel - a.setLossesPerPointspiel;
-      return b.losses - a.losses;
+      if (b.matchPoints.lost !== a.matchPoints.lost) return b.matchPoints.lost - a.matchPoints.lost;
+      return b.rank - a.rank;
     })
     .slice(0, 10);
 
   return (
     <main className="container">
       <MainNav />
+
       <section className="header">
         <div>
           <div className="badge">Analyse Center</div>
           <h1 className="title">TNB Analyse Center</h1>
           <p className="subtitle">
-            Diese Seite verdichtet öffentliche nuLiga Tabellenstände über alle TNB Herren Ligen hinweg. Die Analysen zeigen dominante Mannschaften, hohe Satzbelastung, enge Gruppen und Mannschaften unter sportlichem Druck.
+            Diese Seite zeigt auffällige Entwicklungen im TNB Herrenbereich: souveräne Teams, enge Tabellenlagen, knappe Punktspiele und Teams unter Ergebnisdruck.
           </p>
         </div>
 
@@ -378,7 +412,7 @@ export default async function AnalysenPage({
           </div>
           <div style={{ marginTop: 14, display: "flex", gap: 14, flexWrap: "wrap" }}>
             <a href="/" style={{ fontWeight: 900 }}>Zurück zur App</a>
-            <a href="/duelle" style={{ fontWeight: 900 }}>TNB Top 10</a>
+            <a href="/duelle" style={{ fontWeight: 900 }}>TNB Top Begegnungen</a>
           </div>
         </div>
       </section>
@@ -389,46 +423,48 @@ export default async function AnalysenPage({
           <div className="metricValue">{filteredTeamRows.length}</div>
         </div>
         <div className="card">
-          <div className="metricLabel">Dominante Teams</div>
-          <div className="metricValue">{dominantTeams.length}</div>
+          <div className="metricLabel">Souveräne Teams</div>
+          <div className="metricValue">{sovereignTeams.length}</div>
         </div>
         <div className="card">
           <div className="metricLabel">Enge Tabellenlagen</div>
-          <div className="metricValue">{tightestGroups.length}</div>
+          <div className="metricValue">{tightTables.length}</div>
         </div>
         <div className="card">
-          <div className="metricLabel">Unter Druck</div>
-          <div className="metricValue">{teamsUnderPressure.length}</div>
+          <div className="metricLabel">Knappe Punktspiele</div>
+          <div className="metricValue">{closeMatchTeams.length}</div>
         </div>
       </section>
 
       <AgeFilter activeAge={activeAge} ageClasses={ageClasses} />
 
-      <TeamTable
-        title="Dominante Teams"
-        subtitle="Mannschaften, die bislang kein Punktspiel verloren und keinen einzelnen Matchpunkt abgegeben haben."
-        rows={dominantTeams}
+      <TeamInsightList
+        title="Souveräne Teams"
+        subtitle="Teams mit besonders hoher Matchquote. Die Matchquote zeigt den Anteil gewonnener Einzel und Doppel an allen bisher gespielten Matches."
+        rows={sovereignTeams}
         valueLabel="Matchquote"
-        value={(row) => `${Math.round((row.matchPoints.won / Math.max(1, row.matchPoints.won + row.matchPoints.lost)) * 100)}%`}
+        value={(row) => formatPercent(row.matchWinRate)}
+        detail={(row) => `${row.matchPointsRaw} Matches · ${row.tablePointsRaw} Mannschaftspunkte · ${row.played} Punktspiel${Number(row.played) === 1 ? "" : "e"}`}
       />
 
-      <TeamTable
-        title="Satzbilanz unter Druck"
-        subtitle="Teams mit auffällig vielen verlorenen Sätzen. Diese Kennzahl ist ein Frühindikator dafür, dass Ergebnisse enger oder instabiler sind, auch wenn noch nicht viele Punktspiele verloren wurden."
-        rows={setLossesPerPointspiel}
-        valueLabel="Verlorene Sätze"
-        value={(row) => row.setLossesPerPointspiel}
-        averageMetric
+      <GroupInsightList rows={tightTables} />
+
+      <TeamInsightList
+        title="Knappe Punktspiele"
+        subtitle="Teams, die besonders häufig enge Begegnungen hatten. Als knapp zählen Punktspiele mit maximal einem Match Unterschied, zum Beispiel 5:4, 4:5 oder 3:3."
+        rows={closeMatchTeams}
+        valueLabel="Knappe Spiele"
+        value={(row) => String(row.closeFixtureCount)}
+        detail={(row) => row.recentCloseResults.length ? row.recentCloseResults.join(" · ") : `${row.matchPointsRaw} Matches · ${row.played} Punktspiele`}
       />
 
-      <GroupTable rows={tightestGroups} />
-
-      <TeamTable
-        title="Teams unter Druck"
-        subtitle="Mannschaften mit vielen verlorenen Matchesn, hoher Satzverlustquote oder bereits verlorenen Punktspielen. Die Kennzahl zeigt den Anteil verlorener Matches."
+      <TeamInsightList
+        title="Teams unter Ergebnisdruck"
+        subtitle="Teams, deren bisherige Ergebnisse bereits deutlich belastet sind. Im Unterschied zu Satzstatistiken geht es hier um verlorene Matches, verlorene Punktspiele und Tabellenlage."
         rows={teamsUnderPressure}
-        valueLabel="Verlorene Matches in %"
-        value={(row) => `${row.matchLossRate}%`}
+        valueLabel="Verlorene Matches"
+        value={(row) => formatPercent(row.matchLossRate)}
+        detail={(row) => `${row.matchPointsRaw} Matches · ${row.tablePointsRaw} Mannschaftspunkte · ${row.losses} verlorene Punktspiel${Number(row.losses) === 1 ? "" : "e"}`}
       />
     </main>
   );
