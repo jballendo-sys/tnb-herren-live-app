@@ -267,48 +267,74 @@ function AgeFilter({ activeAge, ageClasses }: { activeAge: string; ageClasses: s
   );
 }
 
+
 function ScoreExplanation() {
   return (
     <section className="card" style={{ padding: 28, marginTop: 24 }}>
       <h2 style={{ marginTop: 0 }}>Wie werden die Scores berechnet?</h2>
+
       <p className="subtitle" style={{ marginTop: 0 }}>
-        Die Top 10 werden nicht nach einem einzelnen Wert gebildet. Jeder Bereich nutzt einen kombinierten Score. Je höher der Score, desto auffälliger ist das Team oder die Gruppe in diesem Analysebereich.
+        Die Scores sind Vergleichswerte innerhalb dieser App. Sie ersetzen keine offizielle Tabelle,
+        sondern helfen dabei, aus vielen Mannschaften und Gruppen die auffälligsten Fälle schneller zu erkennen.
+        Ein hoher Score bedeutet: Mehrere sportliche Signale zeigen gleichzeitig in dieselbe Richtung.
       </p>
 
-      <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", marginTop: 18 }}>
+      <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", marginTop: 20 }}>
         <div style={{ border: "1px solid #dfe9e2", borderRadius: 18, padding: 18, background: "#ffffff" }}>
           <h3 style={{ marginTop: 0 }}>Souveränitäts Score</h3>
-          <p className="subtitle" style={{ marginTop: 0 }}>
-            Bewertet Teams, die nicht nur gewinnen, sondern dies möglichst klar und über mehrere Begegnungen tun.
+          <p style={{ color: "#66746c" }}>
+            Misst, wie klar und belastbar ein Team bisher dominiert.
           </p>
-          <p style={{ marginBottom: 0, color: "#66746c" }}>
-            Matchquote zählt am stärksten. Zusätzlich fließen Satzquote, Anzahl gespielter Punktspiele und ein Bonus für Rang 1 oder Rang 2 ein.
+          <p style={{ color: "#66746c" }}>
+            Matchquote zählt am stärksten. Zusätzlich fließen Satzquote, Anzahl gespielter Punktspiele
+            und ein Bonus für Rang 1 oder Rang 2 ein.
+          </p>
+          <p style={{ color: "#66746c" }}>
+            Beispiel: Rang 1, 2 Punktspiele, 12:0 Matches, 24:0 Sätze.
+          </p>
+          <p style={{ marginBottom: 0, fontWeight: 900 }}>
+            Beispiel Score: 50 + 25 + 10 + 10 = 95,0
           </p>
         </div>
 
         <div style={{ border: "1px solid #dfe9e2", borderRadius: 18, padding: 18, background: "#ffffff" }}>
           <h3 style={{ marginTop: 0 }}>Spannungs Score</h3>
-          <p className="subtitle" style={{ marginTop: 0 }}>
-            Bewertet Gruppen, in denen die Tabellenspitze besonders eng ist.
+          <p style={{ color: "#66746c" }}>
+            Misst, wie eng und sportlich relevant eine Tabellenlage an der Spitze ist.
           </p>
-          <p style={{ marginBottom: 0, color: "#66746c" }}>
-            Entscheidend sind der Punkteabstand zwischen Rang 1 und Rang 3, der Matchabstand der Spitzenteams, bereits gespielte Begegnungen und noch ausstehende Begegnungen.
+          <p style={{ color: "#66746c" }}>
+            Der Score steigt, wenn Rang 1 bis Rang 3 nahe beieinanderliegen, die Matchabstände klein sind,
+            bereits Begegnungen gespielt wurden und noch relevante Begegnungen ausstehen.
+          </p>
+          <p style={{ color: "#66746c" }}>
+            Beispiel: 0 Punkte Abstand zwischen Rang 1 und Rang 3, 1 Match Abstand, mindestens 6 gespielte und 6 ausstehende Begegnungen.
+          </p>
+          <p style={{ marginBottom: 0, fontWeight: 900 }}>
+            Beispiel Score: 40 + 23 + 24 + 18 = 105,0
           </p>
         </div>
 
         <div style={{ border: "1px solid #dfe9e2", borderRadius: 18, padding: 18, background: "#ffffff" }}>
           <h3 style={{ marginTop: 0 }}>Ergebnisdruck Score</h3>
-          <p className="subtitle" style={{ marginTop: 0 }}>
-            Bewertet Teams, deren bisherige Ergebnisse besonders belastet sind.
+          <p style={{ color: "#66746c" }}>
+            Misst, wie stark ein Team bisher sportlich unter Ergebnisdruck steht.
           </p>
-          <p style={{ marginBottom: 0, color: "#66746c" }}>
-            Berücksichtigt werden Matchverlustquote, Satzverlustquote, verlorene Punktspiele, Anzahl gespielter Punktspiele, verlorene Matches und eine schwache Tabellenposition.
+          <p style={{ color: "#66746c" }}>
+            Der Score kombiniert Matchverlustquote, Satzverlustquote, Anzahl gespielter Punktspiele,
+            verlorene Punktspiele, verlorene Matches und Tabellenrang.
+          </p>
+          <p style={{ color: "#66746c" }}>
+            Beispiel: Rang 7, 2 Punktspiele verloren, 0:12 Matches, 0:24 Sätze.
+          </p>
+          <p style={{ marginBottom: 0, fontWeight: 900 }}>
+            Beispiel Score: 45 + 15 + 12 + 16 + 9,6 + 8 = 105,6
           </p>
         </div>
       </div>
 
-      <p className="subtitle" style={{ marginTop: 18, marginBottom: 0 }}>
-        Die Scores sind bewusst als Vergleichswerte gedacht. Sie ersetzen nicht die offizielle Tabelle, helfen aber dabei, aus vielen Mannschaften und Gruppen die auffälligsten Fälle schneller zu erkennen.
+      <p className="subtitle" style={{ marginTop: 20, marginBottom: 0 }}>
+        Wichtig: Die Scores sind keine offiziellen nuLiga Werte. Sie erklären nur, warum ein Team oder eine Gruppe
+        in dieser App unter den Top 10 erscheint.
       </p>
     </section>
   );
