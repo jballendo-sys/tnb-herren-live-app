@@ -34,6 +34,32 @@ function monthLabel(date: Date) {
   });
 }
 
+function parseGermanFixtureDate(value: string) {
+  const [dayRaw, monthRaw, yearRaw] = String(value || "").split(".");
+  const day = Number(dayRaw);
+  const month = Number(monthRaw);
+  const year = Number(yearRaw);
+
+  if (!Number.isFinite(day) || !Number.isFinite(month) || !Number.isFinite(year)) {
+    return null;
+  }
+
+  return new Date(year, month - 1, day);
+}
+
+function isFixtureInCurrentMonth(fixtureDate: string, referenceDate: Date) {
+  const parsedDate = parseGermanFixtureDate(fixtureDate);
+
+  if (!parsedDate) {
+    return false;
+  }
+
+  return (
+    parsedDate.getMonth() === referenceDate.getMonth() &&
+    parsedDate.getFullYear() === referenceDate.getFullYear()
+  );
+}
+
 function normalize(value: string | null | undefined) {
   return String(value || "")
     .toLowerCase()
@@ -137,17 +163,15 @@ function classifyTopMatch(item: any) {
 
   if (bothUndefeated) {
     return {
-      priority: 1,
-      label: "Ungeschlagen gegen ungeschlagen",
+      priority: 2, label: "Ungeschlagen gegen ungeschlagen",
       reason: "Beide Mannschaften sind in dieser Gruppe noch ungeschlagen."
     };
   }
 
   if (oneVsTwo) {
     return {
-      priority: 2,
-      label: "Rang 1 gegen Rang 2",
-      reason: "Direktes Spitzenspiel zwischen den beiden bestplatzierten Mannschaften."
+      priority: 1, label: "Rang 1 gegen Rang 2",
+      reason: "Spitzenspiel Rang 1 gegen Rang 2 zwischen den beiden bestplatzierten Mannschaften."
     };
   }
 
@@ -233,11 +257,30 @@ export default async function DuellePage() {
     }
   }
 
-  const topMatches = candidates.sort(sortTopMatches).slice(0, 10);
+  const topMatches = candidates
+    .filter((item) => isFixtureInCurrentMonth(item.date, today))
+    .sort((a, b) => {
+      if (a.classification.priority !== b.classification.priority) {
+        return a.classification.priority - b.classification.priority;
+      }
 
-  const undefeatedCount = candidates.filter((item) => item.classification.priority === 1).length;
-  const topTableCount = candidates.filter((item) => item.classification.priority === 2).length;
-  const bottomTableCount = candidates.filter((item) => item.classification.priority === 3).length;
+      const aDate = parseGermanFixtureDate(a.date)?.getTime() ?? 0;
+      const bDate = parseGermanFixtureDate(b.date)?.getTime() ?? 0;
+
+      return aDate - bDate;
+    })
+    .slice(0, 10);
+
+  const topTableCount = topMatches.filter((item) => item.classification.priority === 1).length;
+  const undefeatedCount = topMatches.filter((item) => item.classification.priority === 2).length;
+  const rankOneVsThreeCount = topMatches.filter((item) => item.classification.priority === 3).length;
+  const bottomTableCount = topMatches.filter((item) => item.classification.priority === 4).length;
+  const visibleRankOneVsTwoCount = topMatches.filter((item) => item.classification.priority === 1).length;
+  const visibleUndefeatedCount = topMatches.filter((item) => item.classification.priority === 2).length;
+  const visibleRankOneVsThreeCount = topMatches.filter((item) => item.classification.priority === 3).length;
+  const visibleBottomTableCount = topMatches.filter((item) => item.classification.priority === 4).length;
+
+
 
   return (
     <main className="container">
@@ -272,24 +315,22 @@ export default async function DuellePage() {
         </div>
         <div className="card">
           <div className="metricLabel">Ungeschlagen Duelle</div>
-          <div className="metricValue">{undefeatedCount}</div>
+          <div className="metricValue">{visibleUndefeatedCount}</div>
         </div>
         <div className="card">
           <div className="metricLabel">Rang 1 gegen 2</div>
-          <div className="metricValue">{topTableCount}</div>
+          <div className="metricValue">{visibleRankOneVsTwoCount}</div>
         </div>
         <div className="card">
           <div className="metricLabel">Kellerduelle</div>
-          <div className="metricValue">{bottomTableCount}</div>
+          <div className="metricValue">{visibleBottomTableCount}</div>
         </div>
       </section>
 
       <section className="card" style={{ padding: 28, marginTop: 24 }}>
         <h2 style={{ marginTop: 0 }}>Was zählt als Top Begegnung?</h2>
         <p className="subtitle" style={{ marginTop: 0 }}>
-          Die Bewertung ist bewusst einfach gehalten. Priorität 1 sind Spiele zwischen zwei ungeschlagenen Teams.
-          Priorität 2 sind direkte Spitzenspiele Rang 1 gegen Rang 2. Priorität 3 sind direkte Kellerduelle zwischen
-          dem letzten und vorletzten Team einer Gruppe. Priorität 4 ergänzt Spiele zwischen Rang 1 und Rang 3. Betrachtet wird immer nur der aktuelle Monat.
+          Top Begegnungen sind Spiele mit besonderer Bedeutung für die Tabelle. Am höchsten bewertet werden direkte Spitzenspiele zwischen Rang 1 und Rang 2. Danach folgen Begegnungen zwischen zwei ungeschlagenen Teams sowie Spiele zwischen Rang 1 und Rang 3. Ergänzend werden direkte Kellerduelle zwischen dem letzten und vorletzten Team einer Gruppe berücksichtigt. Betrachtet wird immer der aktuelle Monat.
         </p>
       </section>
 
