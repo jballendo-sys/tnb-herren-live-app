@@ -278,7 +278,7 @@ function GroupInsightList({ rows }: { rows: any[] }) {
     <section className="card" style={{ padding: 28, marginTop: 24 }}>
       <h2 style={{ marginTop: 0 }}>Enge Tabellenlagen</h2>
       <p className="subtitle" style={{ marginTop: 0 }}>
-        Gruppen, in denen Rang 1 bis Rang 3 nah beieinanderliegen. Die Kennzahl zeigt den Abstand in Mannschaftspunkten zwischen Rang 1 und Rang 3. Je kleiner der Abstand, desto offener ist das Rennen an der Spitze.
+        Gruppen, in denen Rang 1 bis Rang 3 nah beieinanderliegen. Die Kennzahl zeigt den Abstand in Mannschaftspunkten zwischen Rang 1 und Rang 3. Je kleiner der Abstand, desto enger ist das Rennen an der Spitze.
       </p>
 
       {rows.length === 0 ? (
@@ -307,7 +307,7 @@ function GroupInsightList({ rows }: { rows: any[] }) {
                   Rang 1: {row.top1.team} · Rang 2: {row.top2.team} · Rang 3: {row.top3.team}
                 </div>
                 <div style={{ color: "#66746c", fontSize: 14, marginTop: 6 }}>
-                  Noch {row.openFixtures} offene Begegnungen
+                  Noch {row.openFixtures} enge Begegnungen
                 </div>
                 <div style={{ marginTop: 6 }}>
                   <a href={row.groupUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, fontWeight: 800 }}>
@@ -317,7 +317,7 @@ function GroupInsightList({ rows }: { rows: any[] }) {
               </div>
 
               <div style={{ textAlign: "right" }}>
-                <div className="metricLabel">Abstand Rang 1 zu 3</div>
+                <div className="metricLabel">Abstand Rang 1 zu Rang 3</div>
                 <div style={{ fontSize: 24, fontWeight: 900 }}>{row.gapTop1ToTop3}</div>
               </div>
             </article>
