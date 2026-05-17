@@ -276,65 +276,130 @@ function ScoreExplanation() {
       <p className="subtitle" style={{ marginTop: 0 }}>
         Die Scores sind Vergleichswerte innerhalb dieser App. Sie ersetzen keine offizielle Tabelle,
         sondern helfen dabei, aus vielen Mannschaften und Gruppen die auffälligsten Fälle schneller zu erkennen.
-        Ein hoher Score bedeutet: Mehrere sportliche Signale zeigen gleichzeitig in dieselbe Richtung.
+        Ein hoher Score bedeutet, dass mehrere sportliche Signale gleichzeitig auffällig sind.
       </p>
 
       <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", marginTop: 20 }}>
         <div style={{ border: "1px solid #dfe9e2", borderRadius: 18, padding: 18, background: "#ffffff" }}>
           <h3 style={{ marginTop: 0 }}>Souveränitäts Score</h3>
+
           <p style={{ color: "#66746c" }}>
-            Misst, wie klar und belastbar ein Team bisher dominiert.
+            Der Souveränitäts Score misst, wie klar und belastbar ein Team bisher dominiert. Er kombiniert vier Signale: Matchquote, Satzquote, Anzahl gespielter Punktspiele und Tabellenrang.
+          </p>
+
+          <p style={{ color: "#66746c", fontWeight: 900, marginBottom: 4 }}>Beispiel:</p>
+          <p style={{ color: "#66746c", marginTop: 0 }}>
+            Ein Team steht auf Rang 1, hat 2 Punktspiele gespielt, 12:0 Matches und 24:0 Sätze.
+          </p>
+
+          <p style={{ color: "#66746c", fontWeight: 900, marginBottom: 4 }}>Berechnung:</p>
+          <p style={{ color: "#66746c", marginTop: 0 }}>
+            12:0 Matches bedeutet: 12 von 12 Matches gewonnen. Das sind 100 Prozent Matchquote. Die Matchquote zählt mit 50 Prozent Gewichtung. Daraus werden 50,0 Score Punkte.
           </p>
           <p style={{ color: "#66746c" }}>
-            Matchquote zählt am stärksten. Zusätzlich fließen Satzquote, Anzahl gespielter Punktspiele
-            und ein Bonus für Rang 1 oder Rang 2 ein.
+            24:0 Sätze bedeutet: 24 von 24 Sätzen gewonnen. Das sind 100 Prozent Satzquote. Die Satzquote zählt mit 25 Prozent Gewichtung. Daraus werden 25,0 Score Punkte.
           </p>
           <p style={{ color: "#66746c" }}>
-            Beispiel: Rang 1, 2 Punktspiele, 12:0 Matches, 24:0 Sätze.
+            2 gespielte Punktspiele bedeuten: 2 mal 5 Punkte Spielpraxis Bonus. Daraus werden 10,0 Score Punkte.
           </p>
-          <p style={{ marginBottom: 0, fontWeight: 900 }}>
-            Beispiel Score: 50 + 25 + 10 + 10 = 95,0
+          <p style={{ color: "#66746c" }}>
+            Rang 1 bringt 10,0 Rang Bonus.
+          </p>
+
+          <p style={{ color: "#66746c", fontWeight: 900, marginBottom: 4 }}>Gesamt:</p>
+          <p style={{ color: "#66746c", marginTop: 0 }}>
+            50,0 plus 25,0 plus 10,0 plus 10,0 ergibt 95,0.
+          </p>
+
+          <p style={{ color: "#66746c", fontWeight: 900, marginBottom: 4 }}>Interpretation:</p>
+          <p style={{ color: "#66746c", marginTop: 0, marginBottom: 0 }}>
+            Ein Score von 95,0 bedeutet: Das Team hat bisher nicht nur alle Matches gewonnen, sondern auch alle Sätze, steht auf Rang 1 und hat diese Dominanz bereits über zwei Punktspiele gezeigt.
           </p>
         </div>
 
         <div style={{ border: "1px solid #dfe9e2", borderRadius: 18, padding: 18, background: "#ffffff" }}>
           <h3 style={{ marginTop: 0 }}>Spannungs Score</h3>
+
           <p style={{ color: "#66746c" }}>
-            Misst, wie eng und sportlich relevant eine Tabellenlage an der Spitze ist.
+            Der Spannungs Score misst, wie eng und sportlich relevant eine Tabellenlage an der Spitze ist. Er kombiniert vier Signale: Punkteabstand zwischen Rang 1 und Rang 3, Matchabstand der Spitzenteams, bereits gespielte Begegnungen und noch ausstehende Begegnungen.
+          </p>
+
+          <p style={{ color: "#66746c", fontWeight: 900, marginBottom: 4 }}>Beispiel:</p>
+          <p style={{ color: "#66746c", marginTop: 0 }}>
+            Rang 1 bis Rang 3 sind punktgleich. Der Matchabstand zwischen Rang 1 und Rang 3 beträgt 1 Match. In der Gruppe wurden mindestens 6 Begegnungen gespielt und es stehen mindestens 6 Begegnungen noch aus.
+          </p>
+
+          <p style={{ color: "#66746c", fontWeight: 900, marginBottom: 4 }}>Berechnung:</p>
+          <p style={{ color: "#66746c", marginTop: 0 }}>
+            0 Punkte Abstand zwischen Rang 1 und Rang 3 bedeutet maximale Tabellenenge. Daraus werden 40,0 Score Punkte.
           </p>
           <p style={{ color: "#66746c" }}>
-            Der Score steigt, wenn Rang 1 bis Rang 3 nahe beieinanderliegen, die Matchabstände klein sind,
-            bereits Begegnungen gespielt wurden und noch relevante Begegnungen ausstehen.
+            1 Match Abstand zwischen Rang 1 und Rang 3 bedeutet eine sehr enge Matchbilanz. Der Matchabstand startet bei maximal 25,0 Punkten und verliert 2,0 Punkte je Match Abstand. Daraus werden 23,0 Score Punkte.
           </p>
           <p style={{ color: "#66746c" }}>
-            Beispiel: 0 Punkte Abstand zwischen Rang 1 und Rang 3, 1 Match Abstand, mindestens 6 gespielte und 6 ausstehende Begegnungen.
+            Mindestens 6 ausstehende Begegnungen bringen den maximalen Zukunftsbonus. 6 mal 4 Punkte ergeben 24,0 Score Punkte.
           </p>
-          <p style={{ marginBottom: 0, fontWeight: 900 }}>
-            Beispiel Score: 40 + 23 + 24 + 18 = 105,0
+          <p style={{ color: "#66746c" }}>
+            Mindestens 6 gespielte Begegnungen zeigen, dass die Tabellenlage bereits belastbar ist. 6 mal 3 Punkte ergeben 18,0 Score Punkte.
+          </p>
+
+          <p style={{ color: "#66746c", fontWeight: 900, marginBottom: 4 }}>Gesamt:</p>
+          <p style={{ color: "#66746c", marginTop: 0 }}>
+            40,0 plus 23,0 plus 24,0 plus 18,0 ergibt 105,0.
+          </p>
+
+          <p style={{ color: "#66746c", fontWeight: 900, marginBottom: 4 }}>Interpretation:</p>
+          <p style={{ color: "#66746c", marginTop: 0, marginBottom: 0 }}>
+            Ein Score von 105,0 bedeutet: Die Tabellenspitze liegt sehr eng zusammen, es wurde schon genug gespielt, und es gibt noch genügend ausstehende Begegnungen, damit sich die Spitze weiter verändern kann.
           </p>
         </div>
 
         <div style={{ border: "1px solid #dfe9e2", borderRadius: 18, padding: 18, background: "#ffffff" }}>
           <h3 style={{ marginTop: 0 }}>Ergebnisdruck Score</h3>
+
           <p style={{ color: "#66746c" }}>
-            Misst, wie stark ein Team bisher sportlich unter Ergebnisdruck steht.
+            Der Ergebnisdruck Score misst, wie stark ein Team bisher sportlich unter Ergebnisdruck steht. Er kombiniert sechs Signale: Matchverlustquote, Satzverlustquote, Anzahl gespielter Punktspiele, verlorene Punktspiele, verlorene Matches und Tabellenrang.
+          </p>
+
+          <p style={{ color: "#66746c", fontWeight: 900, marginBottom: 4 }}>Beispiel:</p>
+          <p style={{ color: "#66746c", marginTop: 0 }}>
+            Ein Team steht unten in der Tabelle, hat 2 Punktspiele verloren, 0:12 Matches und 0:24 Sätze.
+          </p>
+
+          <p style={{ color: "#66746c", fontWeight: 900, marginBottom: 4 }}>Berechnung:</p>
+          <p style={{ color: "#66746c", marginTop: 0 }}>
+            0:12 Matches bedeutet: 12 von 12 Matches verloren. Das sind 100 Prozent Matchverlustquote. Die Matchverlustquote zählt mit 45 Prozent Gewichtung. Daraus werden 45,0 Score Punkte.
           </p>
           <p style={{ color: "#66746c" }}>
-            Der Score kombiniert Matchverlustquote, Satzverlustquote, Anzahl gespielter Punktspiele,
-            verlorene Punktspiele, verlorene Matches und Tabellenrang.
+            0:24 Sätze bedeutet: 24 von 24 Sätzen verloren. Das sind 100 Prozent Satzverlustquote. Die Satzverlustquote zählt mit 15 Prozent Gewichtung. Daraus werden 15,0 Score Punkte.
           </p>
           <p style={{ color: "#66746c" }}>
-            Beispiel: Rang 7, 2 Punktspiele verloren, 0:12 Matches, 0:24 Sätze.
+            2 gespielte Punktspiele bedeuten: 2 mal 6 Punkte Spielpraxis Bonus. Daraus werden 12,0 Score Punkte.
           </p>
-          <p style={{ marginBottom: 0, fontWeight: 900 }}>
-            Beispiel Score: 45 + 15 + 12 + 16 + 9,6 + 8 = 105,6
+          <p style={{ color: "#66746c" }}>
+            2 verlorene Punktspiele bedeuten: 2 mal 8 Punkte Verlustbonus. Daraus werden 16,0 Score Punkte.
+          </p>
+          <p style={{ color: "#66746c" }}>
+            12 verlorene Matches bedeuten: 12 mal 0,8 Punkte. Daraus werden 9,6 Score Punkte.
+          </p>
+          <p style={{ color: "#66746c" }}>
+            Ein Tabellenrang im unteren Bereich bringt zusätzlich 8,0 Punkte.
+          </p>
+
+          <p style={{ color: "#66746c", fontWeight: 900, marginBottom: 4 }}>Gesamt:</p>
+          <p style={{ color: "#66746c", marginTop: 0 }}>
+            45,0 plus 15,0 plus 12,0 plus 16,0 plus 9,6 plus 8,0 ergibt 105,6.
+          </p>
+
+          <p style={{ color: "#66746c", fontWeight: 900, marginBottom: 4 }}>Interpretation:</p>
+          <p style={{ color: "#66746c", marginTop: 0, marginBottom: 0 }}>
+            Ein Score von 105,6 bedeutet: Das Team hat nicht nur alle Matches verloren, sondern auch alle Sätze, mehrere Punktspiele verloren und steht zusätzlich in einer belasteten Tabellenposition.
           </p>
         </div>
       </div>
 
       <p className="subtitle" style={{ marginTop: 20, marginBottom: 0 }}>
-        Wichtig: Die Scores sind keine offiziellen nuLiga Werte. Sie erklären nur, warum ein Team oder eine Gruppe
-        in dieser App unter den Top 10 erscheint.
+        Wichtig: Die Scores sind keine offiziellen nuLiga Werte. Sie erklären nur, warum ein Team oder eine Gruppe in dieser App unter den Top 10 erscheint.
       </p>
     </section>
   );
@@ -561,9 +626,7 @@ export default async function AnalysenPage({
 
       <AgeFilter activeAge={activeAge} ageClasses={ageClasses} />
 
-      <ScoreExplanation />
-
-      <TeamInsightList
+<TeamInsightList
         title="Souveräne Teams"
         subtitle={`${sovereignTeams.length} Teams erfüllen aktuell die Kriterien. Angezeigt werden die Top 10 nach Souveränitäts Score. Der Score kombiniert Matchquote, Satzquote, Anzahl gespielter Punktspiele und Tabellenrang. Dadurch werden Teams bevorzugt, die nicht nur gewinnen, sondern dies auch klar und über mehrere Begegnungen bestätigen.`}
         rows={sovereignTeams}
@@ -581,6 +644,8 @@ export default async function AnalysenPage({
         value={(row) => formatScore(row.displayScore ?? calculatePressureScore(row))}
         detail={(row) => `Score ${formatScore(row.displayScore ?? calculatePressureScore(row))} · ${row.matchPointsRaw} Matches · ${row.tablePointsRaw} Mannschaftspunkte · ${row.losses} verlorene Punktspiele`}
       />
-    </main>
+      <ScoreExplanation />
+
+</main>
   );
 }
