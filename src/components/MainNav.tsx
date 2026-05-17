@@ -2,7 +2,9 @@
   const links = [
     { href: "/", label: "Start" },
     { href: "/analysen", label: "Analysen" },
-    { href: "/duelle", label: "Top Begegnungen" },
+  { href: "/ergebnisse", label: "Aktuelle Ergebnisse" },
+    { href: "/ergebnisse", label: "Aktuelle Ergebnisse" },
+  { href: "/duelle", label: "Top Begegnungen" },
     { href: "/turniere", label: "Turniere" },
     { href: "/impressum", label: "Impressum" }
   ];

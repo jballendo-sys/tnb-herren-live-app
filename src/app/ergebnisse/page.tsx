@@ -14,6 +14,23 @@ function parseDate(value: string | null | undefined) {
   return new Date(year, month - 1, day).getTime();
 }
 
+function isWithinLastSevenDays(dateText: string | null | undefined) {
+  const timestamp = parseDate(dateText);
+
+  if (!timestamp) {
+    return false;
+  }
+
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 7);
+  sevenDaysAgo.setHours(0, 0, 0, 0);
+
+  return timestamp >= sevenDaysAgo.getTime() && timestamp <= today.getTime();
+}
+
 function resultValue(fixture: any) {
   const raw = String(fixture.matchPoints || fixture.score || fixture.result || "").trim();
   const match = raw.match(/^(\d+)\s*:\s*(\d+)$/);
@@ -63,6 +80,7 @@ export default async function ErgebnissePage() {
           groupUrl: fixture.reportUrl || fixture.url || team.groupUrl || team.sourceUrl
         }))
         .filter((row: any) => row.result)
+        .filter((row: any) => isWithinLastSevenDays(row.date))
     );
 
   const uniqueRows = Array.from(
@@ -78,7 +96,7 @@ export default async function ErgebnissePage() {
           <div className="badge">Ergebnisse</div>
           <h1 className="title">Aktuelle Ergebnisse</h1>
           <p className="subtitle">
-            Diese Seite zeigt aktuell beendete Begegnungen bzw. den Stand der letzten Ergebniserfassung.
+            Diese Seite zeigt aktuell beendete Begegnungen der letzten 7 Tage bzw. den Stand der letzten Ergebniserfassung.
           </p>
         </div>
 
@@ -92,7 +110,7 @@ export default async function ErgebnissePage() {
         <h2 style={{ marginTop: 0 }}>Ergebnisliste</h2>
 
         {uniqueRows.length === 0 ? (
-          <p className="subtitle">Aktuell wurden keine plausiblen Ergebnisse gefunden.</p>
+          <p className="subtitle">Aktuell wurden keine plausiblen Ergebnisse der letzten 7 Tage gefunden.</p>
         ) : (
           <div style={{ display: "grid", gap: 12 }}>
             {uniqueRows.map((row: any, index: number) => (
