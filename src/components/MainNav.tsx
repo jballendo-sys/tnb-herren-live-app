@@ -8,7 +8,7 @@ const navItems = [
   { href: "/impressum", label: "Impressum" },
 ];
 
-export default function MainNav() {
+export function MainNav() {
   return (
     <header
       style={{
@@ -71,3 +71,5 @@ export default function MainNav() {
     </header>
   );
 }
+
+export default MainNav;
