@@ -385,9 +385,8 @@ export function TnbDashboard({ data }: { data: AppData }) {
           alignItems: "center"
         }}
       >
-        <a className="badge" href="/" style={{ textDecoration: "none", fontWeight: 900 }}>Start</a>
-<a href="/ergebnisse" className="pill">Aktuelle Ergebnisse</a>
-	<a href="/ergebnisse" className="pill">Aktuelle Ergebnisse</a>
+        <a className="badge" href="/start" style={{ textDecoration: "none", fontWeight: 900 }}>Start</a>
+        <a className="badge" href="/Aktuelle Ergebnisse" style={{ textDecoration: "none", fontWeight: 900 }}>Aktuelle Ergebnisse</a>
         <a className="badge" href="/analysen" style={{ textDecoration: "none", fontWeight: 900 }}>Analysen</a>
         <a className="badge" href="/duelle" style={{ textDecoration: "none", fontWeight: 900 }}>Top Begegnungen</a>
         <a className="badge" href="/turniere" style={{ textDecoration: "none", fontWeight: 900 }}>Turniere</a>
