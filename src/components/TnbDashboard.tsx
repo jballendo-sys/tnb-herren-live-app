@@ -1,4 +1,4 @@
-"use client";
+ï»¿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import type { AppData, Fixture, FixtureStatus, StandingRow, TeamEntry } from "@/types/tnb";
@@ -59,7 +59,7 @@ function AppLogo() {
           TNB Herren Kompass
         </div>
         <div style={{ color: "#64748b", fontSize: 14, fontWeight: 600 }}>
-          Herren Ligen · Ergebnisse · Tabellen · Analyse
+          Herren Ligen Â· Ergebnisse Â· Tabellen Â· Analyse
         </div>
       </div>
     </div>
@@ -280,10 +280,10 @@ function DataCheck({ team }: { team: TeamEntry }) {
 
   return (
     <div className={isComplete ? "card" : "warning"}>
-      <strong>Datenprüfung</strong>
+      <strong>DatenprÃ¼fung</strong>
       <p className="subtitle" style={{ marginBottom: 0 }}>
         Aus den angezeigten abgeschlossenen Mannschaftsspielen ergeben sich {calculated.won}:{calculated.lost} Matches.
-        Die offizielle Tabelle zeigt {official.a}:{official.b}. {isComplete ? "Die Anzeige ist plausibel." : "Die Anzeige ist noch nicht vollständig oder eine Spielzeile wurde nicht erkannt."}
+        Die offizielle Tabelle zeigt {official.a}:{official.b}. {isComplete ? "Die Anzeige ist plausibel." : "Die Anzeige ist noch nicht vollstÃ¤ndig oder eine Spielzeile wurde nicht erkannt."}
       </p>
     </div>
   );
@@ -354,10 +354,10 @@ export function TnbDashboard({ data }: { data: AppData }) {
       <section className="header">
         <div>
           <AppLogo />
-<div className="badge" style={{ marginTop: 18 }}>Inoffizielle Auswertung öffentlicher nuLiga Daten</div>
+<div className="badge" style={{ marginTop: 18 }}>Inoffizielle Auswertung Ã¶ffentlicher nuLiga Daten</div>
 <h1 className="title" style={{ marginTop: 18, marginBottom: 8 }}>TNB Herren Kompass</h1>
 <p className="subtitle">
-  Finde Vereine, Mannschaften, Tabellen und relevante Entwicklungen im TNB Herrenbereich schneller als über einzelne nuLiga Gruppen.
+  Finde Vereine, Mannschaften, Tabellen und relevante Entwicklungen im TNB Herrenbereich schneller als Ã¼ber einzelne nuLiga Gruppen.
 </p>
         </div>
 
@@ -367,7 +367,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
             {new Date(data.generatedAt).toLocaleString("de-DE")}
           </div>
           <div className="metricLabel" style={{ marginTop: 8 }}>
-            {data.groupCount} Gruppen · {data.teamCount} Mannschaften
+            {data.groupCount} Gruppen Â· {data.teamCount} Mannschaften
           </div>
         </div>
       </section>
@@ -418,7 +418,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
         </select>
 
         <button className="button" onClick={() => { setQuery(""); setAgeClass("all"); }}>
-          Filter zurücksetzen
+          Filter zurÃ¼cksetzen
         </button>
       </section>
 
@@ -448,11 +448,11 @@ export function TnbDashboard({ data }: { data: AppData }) {
                       </div>
 
                       <div style={{ marginTop: 5, color: active ? "#cbd5e1" : "#64748b", fontSize: 13 }}>
-                        {team.league} · {team.group}
+                        {team.league} Â· {team.group}
                       </div>
 
                       <div style={{ marginTop: 5, color: active ? "#cbd5e1" : "#64748b", fontSize: 13 }}>
-                        {a.points} Punkte · {a.completedFixtures} gespielt · {a.openFixtures} offen
+                        {a.points} Punkte Â· {a.completedFixtures} gespielt Â· {a.openFixtures} offen
                       </div>
                     </button>
                   );
@@ -490,7 +490,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
                 </button>
               </div>
                   <div className="subtitle">
-                    {selectedTeam.cityGuess} · {selectedTeam.league} · {selectedTeam.group}
+                    {selectedTeam.cityGuess} Â· {selectedTeam.league} Â· {selectedTeam.group}
                   </div>
                 </div>
 
@@ -504,12 +504,12 @@ export function TnbDashboard({ data }: { data: AppData }) {
                 <div className="card"><div className="metricLabel">Punkte</div><div style={{ fontWeight: 800 }}>{selectedAnalytics.points}</div></div>
                 <div className="card"><div className="metricLabel">Match Quote</div><div style={{ fontWeight: 800 }}>{selectedAnalytics.matchRate}%</div></div>
                 <div className="card"><div className="metricLabel">Satz Quote</div><div style={{ fontWeight: 800 }}>{selectedAnalytics.setRate}%</div></div>
-                <div className="card"><div className="metricLabel">Quelle</div><a href={selectedTeam.groupUrl} target="_blank" rel="noreferrer" style={{ fontWeight: 800 }}>nuLiga öffnen</a></div>
+                <div className="card"><div className="metricLabel">Quelle</div><a href={selectedTeam.groupUrl} target="_blank" rel="noreferrer" style={{ fontWeight: 800 }}>nuLiga Ã¶ffnen</a></div>
               </div>
 
               <div className="tabs">
                 {[
-                  ["overview", "Überblick"],
+                  ["overview", "Ãœberblick"],
                   ["fixtures", "Ergebnisse"],
                   ["standings", "Tabelle"],
                   ["analysis", "Analyse"]
@@ -538,7 +538,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
                       <FixtureRow key={`own-${fixture.date}-${fixture.homeTeam}-${fixture.awayTeam}-${index}`} fixture={fixture} highlight={selectedTeam.club} />
                     ))
                   ) : (
-                    <div className="warning">Für diese Mannschaft wurden keine eigenen Spiele erkannt.</div>
+                    <div className="warning">FÃ¼r diese Mannschaft wurden keine eigenen Spiele erkannt.</div>
                   )}
 
                   <h3 style={{ marginTop: 26 }}>Alle Gruppenspiele</h3>
@@ -561,7 +561,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
                         <th>N</th>
                         <th>Tab.</th>
                         <th>Matches</th>
-                        <th>Sätze</th>
+                        <th>SÃ¤tze</th>
                         <th>Spiele</th>
                       </tr>
                     </thead>
@@ -588,14 +588,14 @@ export function TnbDashboard({ data }: { data: AppData }) {
               {activeTab === "analysis" && (
                 <div style={{ display: "grid", gap: 16 }}>
                   <div className="metrics" style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}>
-                    <div className="card"><div className="metricLabel">Tabellenführer</div><div style={{ fontWeight: 800 }}>{selectedAnalytics.leader ?? "?"}</div></div>
+                    <div className="card"><div className="metricLabel">TabellenfÃ¼hrer</div><div style={{ fontWeight: 800 }}>{selectedAnalytics.leader ?? "?"}</div></div>
                     <div className="card"><div className="metricLabel">Abstand zur Spitze</div><div style={{ fontWeight: 800 }}>{selectedAnalytics.distanceToLeader} Punkte</div></div>
-                    <div className="card"><div className="metricLabel">Abstand zum nächsten Rang</div><div style={{ fontWeight: 800 }}>{selectedAnalytics.distanceToNextRank} Punkte</div></div>
+                    <div className="card"><div className="metricLabel">Abstand zum nÃ¤chsten Rang</div><div style={{ fontWeight: 800 }}>{selectedAnalytics.distanceToNextRank} Punkte</div></div>
                     <div className="card"><div className="metricLabel">Trend</div><div style={{ fontWeight: 800 }}>{selectedAnalytics.trend}</div></div>
                   </div>
 
                   <div className="card">
-                    <strong>Automatische Einschätzung</strong>
+                    <strong>Automatische EinschÃ¤tzung</strong>
                     <p className="subtitle">
                       {selectedTeam.club} steht aktuell auf {formatRank(selectedAnalytics.rank)} mit {selectedAnalytics.points} Tabellenpunkten.
                       Die Match Quote liegt bei {selectedAnalytics.matchRate} Prozent, die Satz Quote bei {selectedAnalytics.setRate} Prozent.
@@ -603,7 +603,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
                     </p>
                     {selectedAnalytics.nextFixture && (
                       <p className="subtitle">
-                        Nächstes offenes Spiel: {selectedAnalytics.nextFixture.date ?? ""} gegen{" "}
+                        NÃ¤chstes offenes Spiel: {selectedAnalytics.nextFixture.date ?? ""} gegen{" "}
                         {normalizeName(selectedAnalytics.nextFixture.homeTeam) === normalizeName(selectedTeam.club)
                           ? selectedAnalytics.nextFixture.awayTeam
                           : selectedAnalytics.nextFixture.homeTeam}
@@ -617,13 +617,13 @@ export function TnbDashboard({ data }: { data: AppData }) {
               )}
             </div>
           ) : (
-            <div className="card">Keine Mannschaft gefunden. Bitte Suche oder Altersklasse ändern.</div>
+            <div className="card">Keine Mannschaft gefunden. Bitte Suche oder Altersklasse Ã¤ndern.</div>
           )}
         </section>
       </section>
           <footer style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid #e2e8f0", color: "#64748b", fontSize: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-          <span>TNB Herren Kompass · Inoffizielle Auswertung öffentlicher nuLiga Daten</span>
+          <span>TNB Herren Kompass Â· Inoffizielle Auswertung Ã¶ffentlicher nuLiga Daten</span>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
   
 <a href="/duelle" style={{ fontWeight: 800 }}>TNB Top 10 Begegnungen</a>
@@ -636,6 +636,7 @@ export function TnbDashboard({ data }: { data: AppData }) {
     </main>
   );
 }
+
 
 
 
