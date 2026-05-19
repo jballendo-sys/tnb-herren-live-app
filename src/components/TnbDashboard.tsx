@@ -488,10 +488,20 @@ export function TnbDashboard({ data }: { data: AppData }) {
                 >
                   {favoriteTeamId === selectedTeam.id ? "Mein Verein ?" : "Als Mein Verein speichern"}
                 </button>
-              </div>
-                  <div className="subtitle">
-                    {selectedTeam.cityGuess} · {selectedTeam.league} · {selectedTeam.group}
-                  </div>
+
+                  {selectedTeam.id ? (
+                    <a
+                      className="badge"
+                      href={`/team/${encodeURIComponent(selectedTeam.id)}`}
+                      style={{ textDecoration: "none", fontWeight: 900 }}
+                    >
+                      Team Detail öffnen
+                    </a>
+                  ) : null}
+                </div>
+                <div className="subtitle">
+                  {selectedTeam.cityGuess} · {selectedTeam.league} · {selectedTeam.group}
+                </div>
                 </div>
 
                 <div style={{ textAlign: "right" }}>
