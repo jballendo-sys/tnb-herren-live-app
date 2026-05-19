@@ -73,6 +73,22 @@ function sameTeamName(a: string | null | undefined, b: string | null | undefined
     .trim();
 }
 
+function teamUrlFromStandingRow(allTeams: any[], currentTeam: any, rowTeamName: string) {
+  const match = allTeams.find((candidate: any) => {
+    const sameGroup =
+      String(candidate.groupId || candidate.group || "") ===
+      String((currentTeam as any).groupId || (currentTeam as any).group || "");
+
+    const sameName =
+      sameTeamName(candidate.team, rowTeamName) ||
+      sameTeamName(candidate.club, rowTeamName);
+
+    return sameGroup && sameName;
+  });
+
+  return match?.id ? `/team/${encodeURIComponent(match.id)}` : "";
+}
+
 function fixtureBelongsToTeam(fixture: any, team: any) {
   const ownName = (team as any).team || (team as any).club;
   const homeTeam = fixture.homeTeam || fixture.home;
@@ -157,6 +173,7 @@ export default async function TeamPage({
   params: { id: string };
 }) {
   const data = await loadData();
+  const allTeams = data.teams || [];
   const team = (data.teams || []).find((item: any) => item.id === params.id);
 
   if (!team) {
@@ -298,7 +315,18 @@ export default async function TeamPage({
                     }}
                   >
                     <td style={{ padding: 10, fontWeight: 900 }}>{row.rank}</td>
-                    <td style={{ padding: 10 }}>{row.team}</td>
+                    <td style={{ padding: 10 }}>
+                      {teamUrlFromStandingRow(allTeams, team, row.team) ? (
+                        <a
+                          href={teamUrlFromStandingRow(allTeams, team, row.team)}
+                          style={{ color: "#245638", fontWeight: 900 }}
+                        >
+                          {row.team}
+                        </a>
+                      ) : (
+                        row.team
+                      )}
+                    </td>
                     <td style={{ padding: 10 }}>{row.played}</td>
                     <td style={{ padding: 10 }}>{row.points || row.tablePoints}</td>
                     <td style={{ padding: 10 }}>{matchesForTableRow(row, (team as any).fixtures || [])}</td>
