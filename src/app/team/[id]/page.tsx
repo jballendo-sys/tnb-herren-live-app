@@ -6,6 +6,59 @@ function resultValue(fixture: any) {
   return String(fixture.matchPoints || fixture.score || fixture.result || "").trim();
 }
 
+function parseMatchResult(value: string | null | undefined) {
+  const match = String(value || "").trim().match(/^(\d+)\s*:\s*(\d+)$/);
+
+  if (!match) {
+    return null;
+  }
+
+  const home = Number(match[1]);
+  const away = Number(match[2]);
+
+  if (!Number.isFinite(home) || !Number.isFinite(away)) {
+    return null;
+  }
+
+  return { home, away };
+}
+
+function matchesForTableRow(row: any, fixtures: any[]) {
+  if (row.matches) {
+    return row.matches;
+  }
+
+  let won = 0;
+  let lost = 0;
+
+  for (const fixture of fixtures || []) {
+    if (fixture.status !== "completed") {
+      continue;
+    }
+
+    const result = parseMatchResult(resultValue(fixture));
+
+    if (!result) {
+      continue;
+    }
+
+    const homeTeam = fixture.homeTeam || fixture.home;
+    const awayTeam = fixture.awayTeam || fixture.away;
+
+    if (sameTeamName(row.team, homeTeam)) {
+      won += result.home;
+      lost += result.away;
+    }
+
+    if (sameTeamName(row.team, awayTeam)) {
+      won += result.away;
+      lost += result.home;
+    }
+  }
+
+  return won + lost > 0 ? `${won}:${lost}` : "–";
+}
+
 function fixtureTeamName(value: string | null | undefined) {
   return String(value || "").trim();
 }
@@ -126,6 +179,8 @@ export default async function TeamPage({
     ((team as any).standings || []).find((row: any) => row.team === (team as any).team || row.team === (team as any).club) ||
     ((team as any).standings || [])[0];
 
+  const ownMatchBalance = matchesForTableRow(standing, (team as any).fixtures || []);
+
   const ownFixtures = ((team as any).fixtures || []).filter((fixture: any) => fixtureBelongsToTeam(fixture, team));
 
   const completedFixtures = ownFixtures
@@ -173,7 +228,7 @@ export default async function TeamPage({
 
         <div className="card">
           <div className="metricLabel">Matchquote</div>
-          <div className="metricValue">{percent(standing?.matches)}%</div>
+          <div className="metricValue">{percent(ownMatchBalance)}%</div>
         </div>
 
         <div className="card">
@@ -246,7 +301,7 @@ export default async function TeamPage({
                     <td style={{ padding: 10 }}>{row.team}</td>
                     <td style={{ padding: 10 }}>{row.played}</td>
                     <td style={{ padding: 10 }}>{row.points || row.tablePoints}</td>
-                    <td style={{ padding: 10 }}>{row.matches}</td>
+                    <td style={{ padding: 10 }}>{matchesForTableRow(row, (team as any).fixtures || [])}</td>
                     <td style={{ padding: 10 }}>{row.sets}</td>
                   </tr>
                 ))}
