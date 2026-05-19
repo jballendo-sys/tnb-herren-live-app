@@ -21,7 +21,7 @@ function sameTeamName(a: string | null | undefined, b: string | null | undefined
 }
 
 function fixtureBelongsToTeam(fixture: any, team: any) {
-  const ownName = team.team || team.club;
+  const ownName = (team as any).team || (team as any).club;
   const homeTeam = fixture.homeTeam || fixture.home;
   const awayTeam = fixture.awayTeam || fixture.away;
 
@@ -123,10 +123,10 @@ export default async function TeamPage({
   }
 
   const standing =
-    (team.standings || []).find((row: any) => row.team === team.team || row.team === team.club) ||
-    (team.standings || [])[0];
+    ((team as any).standings || []).find((row: any) => row.team === (team as any).team || row.team === (team as any).club) ||
+    ((team as any).standings || [])[0];
 
-  const ownFixtures = (team.fixtures || []).filter((fixture: any) => fixtureBelongsToTeam(fixture, team));
+  const ownFixtures = ((team as any).fixtures || []).filter((fixture: any) => fixtureBelongsToTeam(fixture, team));
 
   const completedFixtures = ownFixtures
     .filter((fixture: any) => fixture.status === "completed")
@@ -143,18 +143,18 @@ export default async function TeamPage({
       <section className="header">
         <div>
           <div className="badge">Team Detail</div>
-          <h1 className="title">{team.team || team.club}</h1>
+          <h1 className="title">{(team as any).team || (team as any).club}</h1>
           <p className="subtitle">
-            {[team.ageClass, team.league, team.group].filter(Boolean).join(" · ")}
+            {[(team as any).ageClass, (team as any).league, (team as any).group].filter(Boolean).join(" · ")}
           </p>
         </div>
 
         <div className="card" style={{ padding: 24, minWidth: 240 }}>
           <div className="metricLabel">Aktueller Rang</div>
           <div className="metricValue">{standing?.rank || "–"}</div>
-          {team.groupUrl || team.sourceUrl ? (
+          {(team as any).groupUrl || (team as any).sourceUrl ? (
             <a
-              href={team.groupUrl || team.sourceUrl}
+              href={(team as any).groupUrl || (team as any).sourceUrl}
               target="_blank"
               rel="noreferrer"
               style={{ color: "#245638", fontWeight: 900 }}
@@ -218,7 +218,7 @@ export default async function TeamPage({
       <section className="card" style={{ padding: 28, marginTop: 24 }}>
         <h2 style={{ marginTop: 0 }}>Tabelle</h2>
 
-        {(team.standings || []).length === 0 ? (
+        {((team as any).standings || []).length === 0 ? (
           <p className="subtitle">Für dieses Team wurde keine Tabelle gefunden.</p>
         ) : (
           <div style={{ overflowX: "auto" }}>
@@ -234,12 +234,12 @@ export default async function TeamPage({
                 </tr>
               </thead>
               <tbody>
-                {(team.standings || []).map((row: any) => (
+                {((team as any).standings || []).map((row: any) => (
                   <tr
                     key={row.team}
                     style={{
                       borderTop: "1px solid #e5ece8",
-                      background: row.team === team.team || row.team === team.club ? "#f4faf6" : undefined
+                      background: row.team === (team as any).team || row.team === (team as any).club ? "#f4faf6" : undefined
                     }}
                   >
                     <td style={{ padding: 10, fontWeight: 900 }}>{row.rank}</td>
