@@ -90,6 +90,21 @@ function ageSortValue(ageClass: string) {
   return Number.isFinite(value) ? value : 999;
 }
 
+function teamUrlForResult(allTeams: any[], row: any, teamName: string) {
+  const match = allTeams.find((team: any) => {
+    const sameGroup =
+      String(team.groupId || team.group || "") === String(row.groupId || row.group || "");
+
+    const sameName =
+      norm(team.team) === norm(teamName) ||
+      norm(team.club) === norm(teamName);
+
+    return sameGroup && sameName;
+  });
+
+  return match?.id ? `/team/${encodeURIComponent(match.id)}` : "";
+}
+
 function rankOf(standings: any[], teamName: string) {
   const row = standings.find((item) => norm(item.team) === norm(teamName));
   return Number(row?.rank ?? 0);
@@ -198,6 +213,8 @@ export default async function ErgebnissePage({
   const topOnly = searchParams?.top === "1";
   const sortMode = searchParams?.sort || "datum_neu";
 
+  const allTeams = data.teams || [];
+
   const filteredRows = uniqueRows
     .filter((row: any) => activeAge === "alle" || row.ageClass === activeAge)
     .filter((row: any) => activeLeague === "alle" || row.league === activeLeague)
@@ -304,8 +321,26 @@ export default async function ErgebnissePage({
                 </div>
 
                 <div>
-                  <div style={{ fontWeight: 900 }}>{row.homeTeam}</div>
-                  <div style={{ color: "#66746c" }}>gegen {row.awayTeam}</div>
+                  <div style={{ fontWeight: 900 }}>
+                  {teamUrlForResult(allTeams, row, row.homeTeam) ? (
+                    <a href={teamUrlForResult(allTeams, row, row.homeTeam)} style={{ color: "#245638", fontWeight: 900 }}>
+                      {row.homeTeam}
+                    </a>
+                  ) : (
+                    row.homeTeam
+                  )}
+                </div>
+
+                <div style={{ color: "#66746c" }}>
+                  gegen{" "}
+                  {teamUrlForResult(allTeams, row, row.awayTeam) ? (
+                    <a href={teamUrlForResult(allTeams, row, row.awayTeam)} style={{ color: "#245638", fontWeight: 900 }}>
+                      {row.awayTeam}
+                    </a>
+                  ) : (
+                    row.awayTeam
+                  )}
+                </div>
 
                   {row.topMatchLabel ? (
                     <div style={{ marginTop: 6 }}>
