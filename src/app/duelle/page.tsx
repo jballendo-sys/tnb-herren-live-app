@@ -560,7 +560,6 @@ export default async function DuellePage({
                     {item.ageClass} · {leagueWithGroup(item.league, item.group)}
                   </div>
                   <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <span className="badge">Priorität {item.classification.priority}</span>
                     <span className="badge">{item.classification.label}</span>
                   </div>
                   <div style={{ marginTop: 8, color: "#66746c", fontSize: 14 }}>
