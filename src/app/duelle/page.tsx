@@ -93,6 +93,28 @@ function uniqueFixtureKey(item: any) {
   ].join("|");
 }
 
+function normalizeTeamLinkName(value: string | null | undefined) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function teamUrlForDuel(allTeams: any[], item: any, teamName: string) {
+  const match = allTeams.find((team: any) => {
+    const sameGroup =
+      String(team.groupId || team.group || "") === String(item.groupId || item.group || "");
+
+    const sameName =
+      normalizeTeamLinkName(team.team) === normalizeTeamLinkName(teamName) ||
+      normalizeTeamLinkName(team.club) === normalizeTeamLinkName(teamName);
+
+    return sameGroup && sameName;
+  });
+
+  return match?.id ? `/team/${encodeURIComponent(match.id)}` : "";
+}
+
 function leagueWithGroup(league: string | null | undefined, group: string | null | undefined) {
   const cleanLeague = String(league || "Liga unbekannt").trim();
   const cleanGroup = String(group || "").trim();
@@ -315,6 +337,7 @@ export default async function DuellePage({
   searchParams?: { altersklasse?: string };
 }) {
   const data = await loadData();
+  const allTeams = data.teams || [];
   const today = new Date();
   const currentMonth = today.getMonth();
   const currentYear = today.getFullYear();
@@ -514,8 +537,25 @@ export default async function DuellePage({
                 </div>
 
                 <div>
-                  <div style={{ fontWeight: 900 }}>{item.homeTeam}</div>
-                  <div style={{ color: "#66746c" }}>gegen {item.awayTeam}</div>
+                  <div style={{ fontWeight: 900 }}>
+                        {teamUrlForDuel(allTeams, item, item.homeTeam) ? (
+                          <a href={teamUrlForDuel(allTeams, item, item.homeTeam)} style={{ color: "#245638", fontWeight: 900 }}>
+                            {item.homeTeam}
+                          </a>
+                        ) : (
+                          item.homeTeam
+                        )}
+                      </div>
+                      <div style={{ color: "#66746c" }}>
+                        gegen{" "}
+                        {teamUrlForDuel(allTeams, item, item.awayTeam) ? (
+                          <a href={teamUrlForDuel(allTeams, item, item.awayTeam)} style={{ color: "#245638", fontWeight: 900 }}>
+                            {item.awayTeam}
+                          </a>
+                        ) : (
+                          item.awayTeam
+                        )}
+                      </div>
                   <div style={{ marginTop: 8, color: "#66746c", fontSize: 14 }}>
                     {item.ageClass} · {leagueWithGroup(item.league, item.group)}
                   </div>
